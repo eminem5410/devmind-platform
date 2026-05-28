@@ -304,6 +304,10 @@ Resumen
 
 ## Features
 
+### Cost Intelligence (v0.7.0)
+Compara el costo de inferencia local contra 32 modelos de API en 11 providers. Calcula ROI mensual considerando throughput real (auto-detectado del último benchmark), ratio de output/cache, tokens diarios y costo eléctrico estimado. Soporta exportación a 5 formatos: JSON, CSV, HTML (auto-contenido con tema oscuro), Markdown y YAML.
+
+
 ### Dashboard Web (v0.6.0)
 Interfaz grafica accesible desde el navegador con 7 paginas: Dashboard con health score y stats, Doctor con checks detallados y recomendaciones, Snapshots con hardware/software/red, Benchmarks con graficos Chart.js e historial, Setup con preview de perfiles, History con tabs filtrables, y Explain con contenido educativo. Todo server-side con Jinja2 + Pico CSS, sin necesidad de Node.js ni build tools.
 

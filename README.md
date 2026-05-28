@@ -5,38 +5,41 @@
   <br/>
   <br/>
   <a href="https://pypi.org/project/devmind/"><img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
+  <a href="https://pypi.org/project/devmind/"><img src="https://img.shields.io/badge/pip_install-devmind-00d4ff?style=flat-square" alt="PyPI"></a>
   <a href="https://github.com/eminem5410/devmind-platform/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square" alt="License"></a>
-  <a href="https://github.com/eminem5410/devmind-platform/releases"><img src="https://img.shields.io/badge/Version-0.5.0-00d4ff?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/eminem5410/devmind-platform/releases"><img src="https://img.shields.io/badge/Version-0.6.0-00d4ff?style=flat-square" alt="Version"></a>
   <img src="https://img.shields.io/badge/Linux-Ready-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
   <img src="https://img.shields.io/badge/API-FastAPI-009688?style=flat-square" alt="FastAPI">
+  <img src="https://img.shields.io/badge/GUI-Pico_CSS-9CF">
 </p>
 
 ---
 
-> *"Diagnosticar impresiona. Reparar automáticamente enamora. Observar es comprender. Servir es integrar."*
+> *"Diagnosticar impresiona. Reparar automaticamente enamora. Observar es comprender. Servir es integrar. Visualizar es comprender."*
 
-DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura y expone** tu entorno de desarrollo AI en Linux. Detecta tu hardware, verifica herramientas, calcula un health score, repara problemas automáticamente, exporta snapshots, benchmarkea modelos locales, genera ambientes completos con perfiles predefinidos, explica warnings en profundidad, hace seguimiento de todo tu historial de actividad y ahora **expone todo via API REST con persistencia en SQLite**.
+DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, explica y expone** tu entorno de desarrollo AI en Linux. Detecta tu hardware, verifica herramientas, calcula un health score, repara problemas automaticamente, exporta snapshots, benchmarkea modelos locales, genera ambientes completos con perfiles predefinidos, explica warnings en profundidad, hace seguimiento de todo tu historial de actividad, expone todo via API REST con persistencia en SQLite, y ahora incluye un **Dashboard Web GUI** con 7 paginas interactivas.
 
 ## Demo (v0.2.0 — Diagnostics + Repair)
 
 <a href="https://asciinema.org/a/Pao5xWmKrGC3BfRU" target="_blank"><img src="https://asciinema.org/a/Pao5xWmKrGC3BfRU.svg" width="720" alt="DevMind Demo"/></a>
 
-## Por qué DevMind
+## Por que DevMind
 
 Configurar un entorno de IA en Linux es fragmentado: drivers NVIDIA, CUDA, Ollama, Docker, Python versions, RAM limits, modelos... DevMind unifica todo eso en un flujo inteligente:
 
 ```
-Diagnosticar  →  Recomendar  →  Reparar  →  Observar  →  Configurar  →  Explicar  →  Servir
+Diagnosticar  →  Recomendar  →  Reparar  →  Observar  →  Configurar  →  Explicar  →  Servir  →  Visualizar
 ```
 
-## Instalación
+## Instalacion
 
 ```bash
-# Clonar el repo
+# Desde PyPI (recomendado)
+pip install devmind
+
+# O clonar el repo
 git clone https://github.com/eminem5410/devmind-platform.git
 cd devmind-platform
-
-# Crear entorno virtual e instalar
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
@@ -47,6 +50,11 @@ pip install -e .
 ```bash
 # Diagnosticar tu sistema completo
 devmind doctor
+
+# Levantar el Dashboard Web + API REST
+devmind serve
+# → Dashboard: http://localhost:8080
+# → Swagger UI: http://localhost:8080/docs
 
 # Configurar un stack de AI completo (adaptado a tu hardware)
 devmind setup local-llm          # Ollama + OpenWebUI
@@ -63,70 +71,86 @@ devmind explain gpu              # GPUs para IA
 # Ver historial de actividad
 devmind history                  # Eventos recientes
 devmind history -b               # Historial de benchmarks
-devmind history -d               # Evolución del health score
+devmind history -d               # Evolucion del health score
 
 # Exportar estado del sistema a JSON
 devmind snapshot -o state.json
 
-# Levantar la API REST
-devmind serve                    # http://localhost:8080
-
-# Output JSON estructurado (para APIs, GUIs, telemetry)
-devmind doctor --json
-
-# Reparar todo automáticamente
+# Reparar todo automaticamente
 devmind repair all
 ```
 
-## API REST (v0.5.0)
+## Dashboard Web (v0.6.0)
 
-DevMind ahora incluye un servidor FastAPI que expone toda la funcionalidad como endpoints REST. Ideal para dashboards, CI/CD, GUIs y herramientas propias.
+DevMind ahora incluye un dashboard web interactivo accesible desde el navegador. Se levanta automaticamente con `devmind serve` y consume los mismos endpoints REST.
 
 ```bash
-# Levantar el servidor
 devmind serve
 # → http://localhost:8080
-# → Swagger UI: http://localhost:8080/docs
-# → ReDoc: http://localhost:8080/redoc
 ```
 
-### Endpoints
+### Paginas disponibles
 
-| Method | Endpoint | Descripción |
+| Pagina | URL | Descripcion |
+|--------|-----|-------------|
+| **Dashboard** | `/` | Vista general: health score, sistema, actividad reciente, quick actions |
+| **Doctor** | `/doctor` | Diagnostico completo con checks detallados, recomendaciones y severity |
+| **Snapshots** | `/snapshots` | Captura y visualiza estado del hardware, software y red |
+| **Benchmarks** | `/benchmarks` | Ejecuta benchmarks Ollama con graficos de rendimiento (Chart.js) |
+| **Setup** | `/setup` | Explora y genera perfiles de configuracion con preview de archivos |
+| **History** | `/history` | Historial completo con tabs: Doctors, Benchmarks, Snapshots |
+| **Explain** | `/explain` | Conceptos de IA explicados en profundidad (5 topics) |
+
+### Stack del Dashboard
+
+| Componente | Tecnologia | Por que |
+|-----------|-----------|---------|
+| Templates | Jinja2 + herencia | Server-side rendering, sin Node.js |
+| Estilos | Pico CSS (CDN) | Dark theme, responsive, sin build step |
+| Graficos | Chart.js (CDN) | Barras para benchmarks historicos |
+| Interactividad | HTMX + vanilla JS | Actualizaciones parciales sin recarga |
+
+### Capturas
+
+**Dashboard** — Health score, stats del sistema y actividad reciente.
+
+**Benchmarks** — Ejecucion con graficos, tabla de resultados e historial con Chart.js.
+
+**History** — Tabs para filtrar diagnosticos, benchmarks y snapshots.
+
+## API REST (v0.5.0+)
+
+Todos los endpoints JSON siguen disponibles junto con las paginas HTML. Ideal para integraciones, CI/CD, GUIs y herramientas propias.
+
+### Endpoints JSON
+
+| Method | Endpoint | Descripcion |
 |--------|----------|-------------|
 | GET | `/api/health` | Health check del servicio |
-| GET | `/api/version` | Versión de la API |
-| GET | `/api/doctor` | Diagnóstico completo (JSON) |
+| GET | `/api/version` | Version de la API |
+| GET | `/api/doctor` | Diagnostico completo (JSON) |
 | GET | `/api/snapshot` | Snapshot del sistema (JSON) |
 | POST | `/api/benchmark/ollama` | Benchmark de modelo Ollama |
 | GET | `/api/setup/profiles` | Lista perfiles disponibles |
 | POST | `/api/setup/{profile}` | Genera archivos de un perfil |
 | GET | `/api/history` | Historial completo (SQLite) |
-| GET | `/api/history/doctors` | Historial de diagnósticos |
+| GET | `/api/history/doctors` | Historial de diagnosticos |
 | GET | `/api/history/benchmarks` | Historial de benchmarks |
 | GET | `/api/history/snapshots` | Historial de snapshots |
 | GET | `/api/explain` | Topics disponibles |
-| GET | `/api/explain/{topic}` | Explicación de un topic |
+| GET | `/api/explain/{topic}` | Explicacion de un topic |
 
 ### Ejemplos con curl
 
 ```bash
-# Diagnóstico completo
+# Diagnostico completo
 curl -s http://localhost:8080/api/doctor | jq '.summary'
 # {"total_checks": 15, "health_score": 93, "health_label": "Excelente", ...}
-
-# Historial de diagnósticos
-curl -s http://localhost:8080/api/history/doctors | jq
-# {"total": 3, "entries": [{"id": 3, "health_score": 93, ...}, ...]}
-
-# Explicar un topic
-curl -s http://localhost:8080/api/explain/ram | jq '.topic'
-# "ram"
 
 # Benchmark de modelo
 curl -X POST http://localhost:8080/api/benchmark/ollama \
   -H "Content-Type: application/json" \
-  -d '{"model": "phi3:mini", "runs": 1}'
+  -d '{"model": "phi3:mini", "runs": 3}'
 ```
 
 ### Opciones del servidor
@@ -140,11 +164,11 @@ devmind serve --reload            # Auto-reload (desarrollo)
 
 ### Persistencia
 
-Los resultados de los endpoints `/api/doctor`, `/api/snapshot` y `/api/benchmark/ollama` se guardan automáticamente en **SQLite** (`~/.devmind/devmind.db`). Esto permite consultar historial entre sesiones sin depender de los logs.
+Los resultados de `/api/doctor`, `/api/snapshot` y `/api/benchmark/ollama` se guardan automaticamente en **SQLite** (`~/.devmind/devmind.db`). Los endpoints `/api/history/*` leen directamente de SQLite para consultas de historial entre sesiones.
 
 ## Output real
 
-### `devmind doctor` — Diagnóstico completo
+### `devmind doctor` — Diagnostico completo
 
 ```
 ╭──────────────────────────────────────────────────────────────────────────╮
@@ -176,62 +200,18 @@ Recomendaciones
 ╰──────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `devmind doctor --compact` — CI / Scripting
+### `devmind serve` — Dashboard Web + API
 
 ```
-DevMind v0.5.0 | Health: 93/100 (Excelente) | W:3 | E:0
-OS: Linux x86_64 | Python: 3.14.4 | CPU: Intel(R) Core(TM) i5-7400 (4c)
-RAM: 6.5 / 7.1 GB (91%) | Disk: 287.2 GB
-GPU: WARN | CUDA: -- | Vulkan: OK
-Docker: OK (29.4.3) | Compose: v5.1.3
-Ollama: OK (0.24.0) | Models: phi3:mini
-Git: OK | pip: OK
-Repairable: 0
-```
-
-### `devmind serve` — API REST
-
-```
-DevMind API — Server v0.5.0
+DevMind API — Server v0.6.0
 
   Host: 127.0.0.1
   Port: 8080
+  Dashboard: http://127.0.0.1:8080
   Docs: http://127.0.0.1:8080/docs
   Redoc: http://127.0.0.1:8080/redoc
 
-Endpoints disponibles:
-  GET  /api/health
-  GET  /api/version
-  GET  /api/doctor
-  GET  /api/snapshot
-  POST /api/benchmark/ollama
-  GET  /api/setup/profiles
-  POST /api/setup/{profile}
-  GET  /api/history
-  GET  /api/explain
-
 INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
-```
-
-### `devmind setup rag-lab --dry-run` — Perfiles de setup
-
-```
-╭──────────────────────────────────────────────────────────────────────────╮
-│ DevMind Setup — Perfil: rag-lab                                         │
-╰──────────────────────────────────────────────────────────────────────────╯
-
-  Hardware: Intel(R) Core(TM) i5-7400 CPU @ 3.00GHz (4c), 7.1 GB RAM
-
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Archivo                          ┃ Tamano ┃ Descripcion                ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ docker-compose.yml               │  699 B │ Stack Docker               │
-│ requirements.txt                 │  422 B │ Dependencias Python        │
-│ rag_engine.py                    │  2.9 KB│ Motor RAG (ingest + query) │
-│ api.py                           │  1.1 KB│ API FastAPI                │
-│ .env                             │   91 B │ Variables de entorno       │
-│ README.md                        │  1.2 KB│ Documentacion              │
-└──────────────────────────────────┴────────┴────────────────────────────┘
 ```
 
 ### `devmind benchmark ollama` — Rendimiento de modelos
@@ -243,43 +223,27 @@ INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
 
   Run 1 — phi3:mini
 
-  Throughput                6.17 tokens/s (Aceptable)
-  TTFT (Time to First Token) 219 ms
+  Throughput                4.70 tokens/s (Aceptable)
+  TTFT (Time to First Token) 2654 ms
   Total time                26154 ms
-  Tokens generados          160 tokens
-  RAM pico Ollama           3750 MB
+  Tokens generados          579
+  RAM pico Ollama           3700 MB
 
 Resumen
-  Benchmarks OK             1/1
-  Avg throughput            6.17 tokens/s
-  Avg TTFT                  219 ms
-  Avg RAM pico              3750 MB
-```
-
-### `devmind history -b` — Historial de benchmarks
-
-```
-Historial de Benchmarks
-
-┏━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━╳━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━┓
-┃   # ┃ Hora     ┃ Modelo         ┃    tok/s ┃     TTFT ┃   RAM MB ┃ Duracion ┃
-┡━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━┩
-│   1 │ 05:50:26 │ phi3:mini      │     2.62 │   5731ms │     3747 │    50.8s │
-│   2 │ 05:51:12 │ phi3:mini      │     6.12 │    239ms │     3749 │    22.9s │
-│   3 │ 05:51:41 │ phi3:mini      │     6.17 │    219ms │     3750 │    26.1s │
-└─────┴──────────┴────────────────┴──────────┴──────────┴──────────┴──────────┘
-
-  Promedios: 4.97 tok/s | TTFT 2063ms | RAM 3749MB
+  Benchmarks OK             3/3
+  Avg throughput            4.70 tokens/s
+  Avg TTFT                  2654 ms
+  Avg RAM pico              3700 MB
 ```
 
 ## Comandos
 
 ### Diagnostico y reparacion
 
-| Comando | Descripción |
+| Comando | Descripcion |
 |---------|-------------|
-| `devmind doctor` | Diagnóstico completo con severity, health score y recomendaciones |
-| `devmind doctor --compact` | Output de 10 líneas para CI y scripting |
+| `devmind doctor` | Diagnostico completo con severity, health score y recomendaciones |
+| `devmind doctor --compact` | Output de 10 lineas para CI y scripting |
 | `devmind doctor --json` | Output JSON estructurado para APIs, GUIs, telemetry |
 | `devmind repair ollama` | Instala, inicia Ollama y descarga modelo recomendado |
 | `devmind repair docker` | Inicia daemon, instala Compose, verifica permisos |
@@ -287,22 +251,22 @@ Historial de Benchmarks
 
 ### Observabilidad
 
-| Comando | Descripción |
+| Comando | Descripcion |
 |---------|-------------|
 | `devmind snapshot` | Exporta estado completo del sistema (terminal) |
 | `devmind snapshot -o state.json` | Guardar snapshot a archivo JSON |
 | `devmind snapshot -o state.yaml` | Guardar snapshot a archivo YAML |
 | `devmind snapshot --json` | Snapshot como JSON por stdout |
-| `devmind snapshot -c` | Snapshot compacto de 6 líneas |
+| `devmind snapshot -c` | Snapshot compacto de 6 lineas |
 | `devmind benchmark ollama` | Benchmark de modelos Ollama (tokens/s, TTFT, RAM) |
 | `devmind benchmark ollama --runs 3` | 3 runs y promedia resultados |
-| `devmind benchmark ollama -m phi3:mini` | Benchmark un modelo específico |
-| `devmind benchmark ollama -c` | Benchmark compacto de 1 línea |
+| `devmind benchmark ollama -m phi3:mini` | Benchmark un modelo especifico |
+| `devmind benchmark ollama -c` | Benchmark compacto de 1 linea |
 | `devmind benchmark ollama --json` | Benchmark como JSON estructurado |
 
 ### Ecosistema
 
-| Comando | Descripción |
+| Comando | Descripcion |
 |---------|-------------|
 | `devmind setup` | Lista perfiles disponibles |
 | `devmind setup local-llm` | Chat local: Ollama + OpenWebUI |
@@ -310,8 +274,7 @@ Historial de Benchmarks
 | `devmind setup rag-lab` | Stack RAG: Ollama + ChromaDB + FastAPI template |
 | `devmind setup <perfil> --dry-run` | Simula sin escribir archivos |
 | `devmind setup <perfil> --force` | Sobreescribe archivos existentes |
-| `devmind setup <perfil> --dir ./mi-proy` | Output a directorio específico |
-| `devmind explain` | Explica warnings del último `devmind doctor` |
+| `devmind explain` | Explica warnings del ultimo `devmind doctor` |
 | `devmind explain ram` | Deep dive: RAM y modelos de IA |
 | `devmind explain gpu` | Deep dive: GPUs para IA, VRAM, presupuesto |
 | `devmind explain python` | Deep dive: Versiones Python y compatibilidad |
@@ -319,65 +282,33 @@ Historial de Benchmarks
 | `devmind explain docker` | Deep dive: Docker para entornos IA |
 | `devmind history` | Muestra historial de actividad reciente |
 | `devmind history -b` | Historial de benchmarks con promedios |
-| `devmind history -d` | Evolución del health score entre diagnósticos |
-| `devmind history -n 50` | Últimos 50 eventos |
+| `devmind history -d` | Evolucion del health score entre diagnosticos |
+| `devmind history -n 50` | Ultimos 50 eventos |
 | `devmind history --json` | Historial como JSON estructurado |
 
-### API REST (v0.5.0)
+### API REST + Dashboard Web
 
-| Comando | Descripción |
+| Comando | Descripcion |
 |---------|-------------|
-| `devmind serve` | Levanta API REST en localhost:8080 |
+| `devmind serve` | Levanta Dashboard + API REST en localhost:8080 |
 | `devmind serve --port 3000` | Puerto custom |
 | `devmind serve --host 0.0.0.0` | Escuchar en todas las interfaces |
 | `devmind serve --reload` | Auto-reload para desarrollo |
 
 ### Herramientas
 
-| Comando | Descripción |
+| Comando | Descripcion |
 |---------|-------------|
-| `devmind gpu` | Análisis detallado de GPU, drivers CUDA y Vulkan |
+| `devmind gpu` | Analisis detallado de GPU, drivers CUDA y Vulkan |
 | `devmind init` | Scaffolding interactivo de proyectos AI |
-
-## Perfiles de Setup
-
-Los perfiles generan stacks completos adaptados a tu hardware detectado:
-
-### `local-llm` — Chat local con LLM
-
-```
-docker-compose.yml   → Ollama + OpenWebUI
-.env                 → Variables de entorno (modelo, puertos)
-README.md            → Documentación con comandos útiles
-```
-
-### `ai-dev` — Entorno completo de desarrollo AI
-
-```
-docker-compose.yml          → Ollama + Jupyter
-requirements.txt            → PyTorch, transformers, langchain, jupyter...
-.env                        → Variables de entorno
-notebooks/test-setup.ipynb  → Notebook de verificación
-README.md                   → Documentación completa
-```
-
-### `rag-lab` — Stack de Retrieval-Augmented Generation
-
-```
-docker-compose.yml   → Ollama + ChromaDB
-requirements.txt     → langchain, chromadb, fastapi...
-rag_engine.py        → Motor RAG (ingest + query) listo para usar
-api.py               → API FastAPI con endpoints /query y /ingest
-.env                 → Variables de entorno
-README.md            → Documentación con ejemplos curl
-```
-
-> Los perfiles detectan tu RAM y GPU para recomendar el modelo óptimo automáticamente.
 
 ## Features
 
+### Dashboard Web (v0.6.0)
+Interfaz grafica accesible desde el navegador con 7 paginas: Dashboard con health score y stats, Doctor con checks detallados y recomendaciones, Snapshots con hardware/software/red, Benchmarks con graficos Chart.js e historial, Setup con preview de perfiles, History con tabs filtrables, y Explain con contenido educativo. Todo server-side con Jinja2 + Pico CSS, sin necesidad de Node.js ni build tools.
+
 ### Health Score
-Puntuación 0-100 que evalúa la preparación de tu sistema para IA, basada en todos los checks realizados. Se visualiza con barra de progreso y etiqueta (Excelente/Bueno/Aceptable/Necesita atención/Crítico).
+Puntuacion 0-100 que evalua la preparacion de tu sistema para IA, basada en todos los checks realizados. Se visualiza con barra de progreso y etiqueta (Excelente/Bueno/Aceptable/Necesita atencion/Critico).
 
 ### Severity Levels
 Cada check tiene un nivel de severidad: `INFO`, `WARNING`, `ERROR`, `CRITICAL`. Permite filtrar, colorear y priorizar issues para UIs, APIs y repair engines.
@@ -386,36 +317,30 @@ Cada check tiene un nivel de severidad: `INFO`, `WARNING`, `ERROR`, `CRITICAL`. 
 El motor analiza tu hardware y software para generar recomendaciones contextuales. Con 7.1 GB RAM recomienda modelos 1B-4B; con GPU NVIDIA recomienda `llama3.1:8b`; detecta Python 3.14 y sugiere 3.12 LTS.
 
 ### Auto-repair
-Repara automáticamente problemas detectados: instala e inicia Ollama, descarga el modelo óptimo según tu hardware, verifica Docker daemon y Compose.
+Repara automaticamente problemas detectados: instala e inicia Ollama, descarga el modelo optimo segun tu hardware, verifica Docker daemon y Compose.
 
-### API REST (v0.5.0)
-Servidor FastAPI que expone toda la funcionalidad de DevMind como endpoints REST. Incluye CORS, Swagger UI, ReDoc y persistencia automática en SQLite. Cada `/api/doctor`, `/api/snapshot` y `/api/benchmark/ollama` queda grabado en `~/.devmind/devmind.db` para consultas de historial entre sesiones.
+### API REST + SQLite
+Servidor FastAPI que expone toda la funcionalidad como endpoints REST. Incluye CORS, Swagger UI, ReDoc y persistencia automatica en SQLite (`~/.devmind/devmind.db`). Cada `/api/doctor`, `/api/snapshot` y `/api/benchmark/ollama` queda grabado para consultas de historial entre sesiones.
 
-### Persistencia en SQLite (v0.5.0)
-Base de datos local en `~/.devmind/devmind.db` con tres tablas: `doctor_runs`, `benchmark_runs` y `snapshots`. Se inicializa automáticamente al levantar el servidor. Los endpoints `/api/history/*` leen directamente de SQLite, complementando los logs estructurados de JSON.
+### Setup Profiles
+Genera stacks completos de desarrollo AI con un solo comando. Los templates se adaptan a tu hardware (RAM, GPU) para recomendar el modelo optimo y configurar limites de recursos. Tres perfiles: `local-llm`, `ai-dev`, `rag-lab`.
 
-### Setup Profiles (v0.4.0)
-Genera stacks completos de desarrollo AI con un solo comando. Los templates se adaptan a tu hardware (RAM, GPU) para recomendar el modelo óptimo y configurar límites de recursos. Tres perfiles disponibles: `local-llm` para chat, `ai-dev` para desarrollo completo, `rag-lab` para retrieval-augmented generation.
+### Explain Mode
+Explica en profundidad los warnings del doctor y temas clave de IA. Con topic especifico (`ram`, `gpu`, `python`, `ollama`, `docker`), muestra guias completas con tablas comparativas, comandos y recomendaciones de hardware.
 
-### Explain Mode (v0.4.0)
-Explica en profundidad los warnings del doctor y temas clave de IA. Sin argumento, analiza el último diagnóstico y sugiere explicaciones relevantes. Con topic específico (`ram`, `gpu`, `python`, `ollama`, `docker`), muestra guías completas con tablas comparativas, comandos y recomendaciones de hardware con precios.
+### History
+Historial completo de actividad desde SQLite. Filtra por tipo: diagnosticos, benchmarks o snapshots. Muestra tablas con evolucion del health score, promedios de throughput y tendencias.
 
-### History (v0.4.0)
-Lee los logs estructurados de `~/.devmind/logs/devmind.log` para mostrar el historial completo de actividad. Filtra por tipo: diagnosticos (`-d`), benchmarks (`-b`), o todos. Muestra tablas con evolución del health score, promedios de throughput y tendencias.
+### Snapshot
+Exporta el estado completo del sistema a JSON o YAML. Incluye hardware (CPU, RAM, GPU, disco), software (OS, Python, Docker, Ollama, Git) y red. Ideal para compartir en issues, comparar antes/despues, y debugging remoto.
 
-### Snapshot (v0.3.0)
-Exporta el estado completo del sistema a JSON o YAML. Incluye hardware (CPU, RAM, GPU, disco), software (OS, Python, Docker, Ollama, Git) y red. Ideal para compartir en issues, comparar antes/después, y debugging remoto.
-
-### Benchmark (v0.3.0)
-Mide rendimiento real de modelos Ollama usando la API de streaming: tokens/s (throughput), TTFT (time to first token), RAM pico consumida, duración total. Color coding de rendimiento y tips para optimizar.
-
-### Logs estructurados (v0.3.0)
-Todos los comandos registran eventos en JSON en `~/.devmind/logs/devmind.log` con session ID, timestamps, y métricas. Rotación automática a 5MB. Útil para debugging, rollback y audit trail.
+### Benchmark
+Mide rendimiento real de modelos Ollama usando la API de streaming: tokens/s (throughput), TTFT (time to first token), RAM pico consumida, duracion total. Color coding de rendimiento y tips para optimizar.
 
 ### 3 modos de output
 Un solo modelo de datos (Pydantic), tres renderizadores:
 - **Rich**: Terminal interactiva con colores, paneles y recomendaciones
-- **Compact**: 10 líneas para CI, scripts y quick checks
+- **Compact**: 10 lineas para CI, scripts y quick checks
 - **JSON**: Estructura completa para APIs, GUIs, telemetry y pipelines
 
 ## Arquitectura
@@ -423,32 +348,43 @@ Un solo modelo de datos (Pydantic), tres renderizadores:
 ```
 src/devmind/
 ├── cli.py                  # Typer entry point (10 comandos)
-├── api/                    # FastAPI REST server (v0.5.0)
-│   ├── main.py             # App con CORS + lifespan
-│   └── routes/
-│       ├── doctor.py       # GET /api/doctor
-│       ├── snapshot.py     # GET /api/snapshot
-│       ├── benchmark.py    # POST /api/benchmark/ollama
-│       ├── setup.py        # GET /api/setup/profiles, POST /api/setup/{profile}
-│       ├── history.py      # GET /api/history/*
-│       └── explain.py      # GET /api/explain/*
-├── db/                     # SQLAlchemy ORM + SQLite (v0.5.0)
+├── api/                    # FastAPI REST server + Web GUI
+│   ├── main.py             # App con CORS + lifespan + static files
+│   ├── routes/
+│   │   ├── doctor.py       # GET /api/doctor
+│   │   ├── snapshot.py     # GET /api/snapshot
+│   │   ├── benchmark.py    # POST /api/benchmark/ollama
+│   │   ├── setup.py        # GET /api/setup/profiles, POST /api/setup/{profile}
+│   │   ├── history.py      # GET /api/history/*
+│   │   ├── explain.py      # GET /api/explain/*
+│   │   └── web.py          # HTML pages (Dashboard, Doctor, Snapshots, ...)
+│   ├── templates/          # Jinja2 HTML templates (v0.6.0)
+│   │   ├── base.html       # Layout base con nav + footer + Pico CSS
+│   │   ├── dashboard.html  # Vista general con health score
+│   │   ├── doctor.html     # Diagnostico con checks y recomendaciones
+│   │   ├── snapshots.html  # Hardware, software, red
+│   │   ├── benchmarks.html # Charts Chart.js + historial
+│   │   ├── setup.html      # Perfiles con preview de archivos
+│   │   ├── history.html    # Tabs filtrables
+│   │   └── explain.html    # Topics educativos
+│   └── static/             # Archivos estaticos
+├── db/                     # SQLAlchemy ORM + SQLite
 │   ├── models.py           # DoctorRunRecord, BenchmarkRunRecord, SnapshotRecord
 │   └── database.py         # Engine, session factory, init_db
 ├── commands/
-│   ├── benchmark.py        # Ollama performance benchmark (v0.3.0)
-│   ├── doctor.py           # Diagnóstico con severity + health score
-│   ├── explain.py          # Deep dive explanations (v0.4.0)
-│   ├── gpu_check.py        # Análisis detallado de GPU
-│   ├── history.py          # Activity history from logs (v0.4.0)
+│   ├── benchmark.py        # Ollama performance benchmark
+│   ├── doctor.py           # Diagnostico con severity + health score
+│   ├── explain.py          # Deep dive explanations
+│   ├── gpu_check.py        # Analisis detallado de GPU
+│   ├── history.py          # Activity history from logs
 │   ├── init_cmd.py         # Scaffolding de proyectos AI
 │   ├── repair.py           # Auto-repair engine
-│   ├── serve.py            # CLI launcher para API REST (v0.5.0)
-│   ├── setup.py            # Setup profiles orchestrator (v0.4.0)
-│   └── snapshot.py         # System snapshot export (v0.3.0)
+│   ├── serve.py            # CLI launcher para API REST
+│   ├── setup.py            # Setup profiles orchestrator
+│   └── snapshot.py         # System snapshot export
 ├── data/
 │   └── profiles/
-│       └── __init__.py     # Profile templates + generators (v0.4.0)
+│       └── __init__.py     # Profile templates + generators
 ├── models/
 │   ├── benchmark.py        # Pydantic: BenchmarkResult, BenchmarkReport
 │   ├── diagnostic.py       # Pydantic: Severity, Check, Recommendation, Report
@@ -456,27 +392,30 @@ src/devmind/
 └── utils/
     ├── docker.py           # Docker + Compose detection
     ├── gpu.py              # NVIDIA/AMD, CUDA, Vulkan
-    ├── logging.py          # Structured JSON logger with rotation (v0.3.0)
+    ├── logging.py          # Structured JSON logger with rotation
     ├── ollama.py           # Ollama version + model listing
     ├── recommendations.py  # Intelligent recommendation engine
     └── system.py           # OS, CPU, RAM, disk info
 ```
 
-Todos los datos fluyen a través de modelos Pydantic, lo que permite:
-- Renderizado consistente en cualquier formato
-- Validación de tipos
-- Serialización JSON nativa
-- Reutilización directa en la API REST (FastAPI usa los mismos modelos)
+Todos los datos fluyen a traves de modelos Pydantic, lo que permite:
+- Renderizado consistente en cualquier formato (terminal, JSON, HTML)
+- Validacion de tipos
+- Serializacion JSON nativa
+- Reutilizacion directa en la API REST y templates web
 
 ## Tech Stack
 
-| Componente | Tecnología |
+| Componente | Tecnologia |
 |-----------|-----------|
 | CLI Framework | [Typer](https://typer.tiangolo.com/) |
 | Terminal UI | [Rich](https://rich.readthedocs.io/) |
 | Data Models | [Pydantic](https://docs.pydantic.dev/) v2 |
 | REST API | [FastAPI](https://fastapi.tiangolo.com/) |
 | Database | [SQLAlchemy](https://www.sqlalchemy.org/) + SQLite |
+| Web Templates | [Jinja2](https://jinja.palletsprojects.com/) |
+| CSS Framework | [Pico CSS](https://picocss.com/) |
+| Charts | [Chart.js](https://www.chartjs.org/) |
 | Server | [Uvicorn](https://www.uvicorn.org/) |
 | System Info | [psutil](https://psulib.org/) |
 | HTTP Client | [httpx](https://www.python-httpx.org/) |
@@ -486,7 +425,7 @@ Todos los datos fluyen a través de modelos Pydantic, lo que permite:
 
 ### v0.1.0 — Diagnostics ✅
 - ✅ `devmind doctor` — Health score, severity, recomendaciones
-- ✅ `devmind repair` — Reparación automática de Ollama y Docker
+- ✅ `devmind repair` — Reparacion automatica de Ollama y Docker
 
 ### v0.2.0 — Benchmarks ✅
 - ✅ `devmind benchmark ollama` — Medir tokens/s, RAM, latencia
@@ -494,7 +433,7 @@ Todos los datos fluyen a través de modelos Pydantic, lo que permite:
 ### v0.3.0 — Observabilidad ✅
 - ✅ `devmind snapshot` — Exportar estado completo a JSON/YAML
 - ✅ `devmind benchmark ollama` — Medir tokens/s, RAM, latencia con streaming
-- ✅ Logs estructurados JSON en `~/.devmind/logs/` con rotación
+- ✅ Logs estructurados JSON en `~/.devmind/logs/` con rotacion
 
 ### v0.4.0 — Ecosistema ✅
 - ✅ `devmind setup local-llm` — Perfil: Ollama + OpenWebUI
@@ -509,11 +448,15 @@ Todos los datos fluyen a través de modelos Pydantic, lo que permite:
 - ✅ Swagger UI + ReDoc
 - ✅ Persistencia SQLite (`~/.devmind/devmind.db`)
 - ✅ CORS habilitado para desarrollo
+- ✅ Publicado en [PyPI](https://pypi.org/project/devmind/)
 
-### v0.6.0 — GUI
-- Control Center desktop (Tauri + React)
-- Health score tracking con gráficos
-- WebSocket para progreso en tiempo real
+### v0.6.0 — GUI Dashboard ✅
+- ✅ Dashboard Web con 7 paginas interactivas
+- ✅ Jinja2 templates + Pico CSS (dark theme)
+- ✅ Chart.js para graficos de benchmarks
+- ✅ HTMX para interactividad sin recarga
+- ✅ Server-side rendering (no Node.js)
+- ✅ Publicado en [PyPI](https://pypi.org/project/devmind/0.6.0/)
 
 ### v0.7.0 — Cloud
 - DevMind Cloud Dashboard

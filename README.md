@@ -23,6 +23,13 @@ DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, ex
 
 <a href="https://asciinema.org/a/hAxWIC5ohtFpFXZm" target="_blank"><img src="https://asciinema.org/a/hAxWIC5ohtFpFXZm.svg" width="720" alt="DevMind v0.7.0 Demo"/></a>
 
+### Dashboard Web
+
+![DevMind Dashboard](devmind-preview.gif)
+
+> Dashboard interactivo con 7 paginas: Home, Diagnosis, Benchmarks, Setup, History, Explain y Compare.
+> Ejecuta `devmind serve` y abre `http://localhost:8080` en tu navegador.
+
 ## Por que DevMind
 
 Configurar un entorno de IA en Linux es fragmentado: drivers NVIDIA, CUDA, Ollama, Docker, Python versions, RAM limits, modelos... DevMind unifica todo eso en un flujo inteligente:

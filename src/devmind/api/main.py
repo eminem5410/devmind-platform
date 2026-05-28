@@ -16,7 +16,7 @@ Endpoints JSON:
   GET  /api/explain            Topics disponibles
   GET  /api/explain/{topic}    Explicacion de un topic
 
-Paginas HTML (v0.7.0):
+Paginas HTML (v0.8.0):
   GET  /          Dashboard
   GET  /doctor    Doctor
   GET  /snapshots Snapshots
@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="DevMind API",
     description="API REST para DevMind Platform — Herramientas CLI para desarrollo de IA",
-    version="0.7.0",
+    version="0.8.0",
     lifespan=lifespan,
 )
 
@@ -72,7 +72,7 @@ async def health():
     return {
         "status": "ok",
         "service": "devmind-api",
-        "version": "0.7.0",
+        "version": "0.8.0",
     }
 
 
@@ -81,7 +81,7 @@ async def version():
     """Version info."""
     return {
         "name": "DevMind Platform",
-        "version": "0.7.0",
+        "version": "0.8.0",
         "api_version": "v1",
     }
 
@@ -91,6 +91,7 @@ async def version():
 from devmind.api.routes.doctor import router as doctor_router
 from devmind.api.routes.snapshot import router as snapshot_router
 from devmind.api.routes.compare import router as compare_router
+from devmind.api.routes.forecast import router as forecast_router
 from devmind.api.routes.benchmark import router as benchmark_router
 from devmind.api.routes.setup import router as setup_router
 from devmind.api.routes.history import router as history_router
@@ -100,6 +101,7 @@ from devmind.api.routes.web import router as web_router
 app.include_router(doctor_router)
 app.include_router(snapshot_router)
 app.include_router(compare_router)
+app.include_router(forecast_router)
 app.include_router(benchmark_router)
 app.include_router(setup_router)
 app.include_router(history_router)

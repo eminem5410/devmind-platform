@@ -248,6 +248,59 @@ devmind benchmark ollama -m phi3:mini
 ```
 """,
 
+        "attention-precision": """## Precisiones de Atencion — FP4, FP8, FP16, BF16, FP32
+
+La precision de los numeros en GPU determina cuanto VRAM usan los modelos, que tan rapido corren, y la calidad del output.
+
+### Que es cada precision
+
+| Precision | Bits | VRAM vs FP32 | Calidad | Velocidad |
+|-----------|------|--------------|---------|-----------|
+| FP32 | 32 | 1x (base) | Maxima | Lenta |
+| FP16 | 16 | 0.5x | Excelente | 2x mas rapida |
+| BF16 | 16 | 0.5x | Excelente | 2x mas rapida |
+| FP8 | 8 | 0.25x | Buena | 4x mas rapida |
+| FP4 | 4 | 0.125x | Aceptable | 8x mas rapida |
+
+### Que significa en la practica
+
+Un modelo de 70B parametros:
+- **FP32**: 280 GB VRAM (imposible en GPU individual)
+- **FP16**: 140 GB VRAM (necesita 8x A100 80GB)
+- **FP8**: 70 GB VRAM (1x H100 80GB)
+- **FP4**: 35 GB VRAM (1x RTX 4090 con offloading)
+
+### FP4 y ThriftAttention
+
+FP4 (4-bit floating point) es la precision mas nueva. ThriftAttention es un paper que propone usar FP4 para la capa de atencion mientras mantiene FP16 para el resto, logrando:
+- **2x reduccion de VRAM** en la atencion
+- **Calidad casi identica** a FP16 completo
+- **Mejor throughput** por usar menos memoria
+
+Actualmente FP4 es soportado principalmente por NPUs (Qualcomm Snapdragon, Intel Core Ultra) y experimentalmente en GPUs NVIDIA via software.
+
+### Hardware compatible
+
+| Hardware | FP4 | FP8 | FP16 | BF16 |
+|---------|-----|-----|------|------|
+| NVIDIA H100 | Experimental | Si | Si | Si |
+| RTX 4090 | No | Si | Si | Si |
+| RTX 3090 | No | No | Si | Si |
+| RTX 3060 | No | No | Si | Si |
+| AMD MI300X | No | Si | Si | Si |
+| Apple M4 Max | No | No | Si | Si |
+| Qualcomm X Elite | Si | Si | Si | Si |
+| Intel Core Ultra | Si | Si | Si | Si |
+
+### Cuando conviene cada una
+
+- **FP32**: Solo para training preciso o cuando la calidad es critica
+- **FP16/BF16**: Standard para inferencia. BF16 es mejor para training
+- **FP8**: Ideal para inferencia de modelos grandes en GPUs modernas (RTX 40xx, H100)
+- **FP4**: Futuro. Ideal para edge AI y NPUs. Aun experimental en GPUs
+
+Ejecuta `devmind explain gpu` para ver GPUs recomendadas por presupuesto.
+""",
     "docker": """## Docker para Entornos de IA
 
 Docker te permite ejecutar herramientas de IA en contenedores aislados sin contaminar tu sistema.

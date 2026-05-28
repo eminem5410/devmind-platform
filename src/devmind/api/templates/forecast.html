@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Forecast - DevMind{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">Cost Forecast</h1>
+  <p class="text-gray-600 mb-6">Proyecta costos de API vs inferencia local a 12 meses.</p>
+
+  <form id="forecast-form" class="bg-white rounded-lg shadow p-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Tokens/segundo (TPS)</label>
+        <input type="number" name="tps" value="10" min="1" class="w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Tokens diarios</label>
+        <input type="number" name="daily_tokens" value="100000" min="1000" class="w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Crecimiento mensual (%)</label>
+        <input type="number" name="growth" value="10" min="0" max="100" class="w-full border rounded px-3 py-2">
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Calcular</button>
+      </div>
+    </div>
+  </form>
+
+  <div id="result" class="hidden">
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-bold mb-4">Proyeccion de Costos</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b">
+              <th class="px-4 py-2">Mes</th>
+              <th class="px-4 py-2 text-red-600">API Costo</th>
+              <th class="px-4 py-2 text-green-600">Local Costo</th>
+              <th class="px-4 py-2 text-cyan-600">Ahorro</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="crossover-panel" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hidden">
+      <h3 class="font-bold text-yellow-800" id="crossover-title"></h3>
+      <p id="crossover-text" class="text-yellow-700"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('forecast-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const params = new URLSearchParams({
+    tps: fd.get('tps'),
+    daily_tokens: fd.get('daily_tokens'),
+    growth: fd.get('growth') / 100
+  });
+  const res = await fetch('/api/forecast?' + params);
+  const data = await res.json();
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  (data.projections || []).forEach(r => {
+    const tr = document.createElement('tr');
+    tr.className = 'border-b';
+    const saving = r.api_cost - r.local_cost;
+    const pct = r.api_cost > 0 ? (saving / r.api_cost * 100).toFixed(0) : '0';
+    tr.innerHTML = `<td class="px-4 py-2">${r.month}</td>
+      <td class="px-4 py-2 text-red-600">$${r.api_cost.toFixed(2)}</td>
+      <td class="px-4 py-2 text-green-600">$${r.local_cost.toFixed(2)}</td>
+      <td class="px-4 py-2 text-cyan-600">$${saving.toFixed(2)} (${pct}%)</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('result').classList.remove('hidden');
+  const co = data.crossover;
+  if (co && co.month) {
+    document.getElementById('crossover-title').textContent = 'Break-even: Mes ' + co.month;
+    document.getElementById('crossover-text').textContent =
+      'API acumulado: $' + co.api_total.toFixed(2) + ' | Local acumulado: $' + co.local_total.toFixed(2) +
+      ' (Hardware: $' + co.hardware_cost.toFixed(2) + ')';
+    document.getElementById('crossover-panel').classList.remove('hidden');
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Optimize - DevMind{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">Model Optimizer</h1>
+  <p class="text-gray-600 mb-6">Encuentra el mejor modelo y proveedor para tu hardware y presupuesto.</p>
+
+  <form id="optimize-form" class="bg-white rounded-lg shadow p-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">TPS objetivo</label>
+        <input type="number" name="tps" value="10" min="1" class="w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">RAM (GB)</label>
+        <input type="number" name="ram" value="8" min="1" class="w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Presupuesto/mes (USD)</label>
+        <input type="number" name="budget" value="50" min="0" step="0.01" class="w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">GPU (vacio = auto)</label>
+        <input type="text" name="gpu" value="" class="w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Caso de uso</label>
+        <select name="use_case" class="w-full border rounded px-3 py-2">
+          <option value="general">General</option>
+          <option value="code">Codigo</option>
+          <option value="creative">Creativo</option>
+          <option value="reasoning">Razonamiento</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">Optimizar</button>
+      </div>
+    </div>
+  </form>
+
+  <div id="result" class="hidden">
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-xl font-bold mb-4">Recomendaciones</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b">
+              <th class="px-4 py-2">#</th>
+              <th class="px-4 py-2">Proveedor</th>
+              <th class="px-4 py-2">Modelo</th>
+              <th class="px-4 py-2">Precision</th>
+              <th class="px-4 py-2">TPS</th>
+              <th class="px-4 py-2">Costo/mes</th>
+              <th class="px-4 py-2">Calidad</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="local-panel" class="bg-green-50 border border-green-200 rounded-lg p-4 hidden">
+      <h3 class="font-bold text-green-800">Opcion Local (tu hardware)</h3>
+      <p id="local-text" class="text-green-700"></p>
+    </div>
+    <div id="best-panel" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4 hidden">
+      <p id="best-text" class="text-blue-800 font-bold"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('optimize-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const params = new URLSearchParams({
+    tps: fd.get('tps'),
+    ram: fd.get('ram'),
+    budget: fd.get('budget'),
+    use_case: fd.get('use_case')
+  });
+  if (fd.get('gpu')) params.set('gpu', fd.get('gpu'));
+  const res = await fetch('/api/optimize?' + params);
+  const data = await res.json();
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  (data.recommendations || []).forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.className = 'border-b';
+    tr.innerHTML = `<td class="px-4 py-2">${i+1}</td>
+      <td class="px-4 py-2 font-medium">${r.provider}</td>
+      <td class="px-4 py-2">${r.model}</td>
+      <td class="px-4 py-2 text-center">${r.precision}</td>
+      <td class="px-4 py-2 text-right">${r.tps}</td>
+      <td class="px-4 py-2 text-right text-cyan-600">$${r.monthly_cost.toFixed(2)}</td>
+      <td class="px-4 py-2 text-center">${r.quality_score}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('result').classList.remove('hidden');
+  if (data.local_option) {
+    const lo = data.local_option;
+    document.getElementById('local-text').textContent =
+      'Modelo: ' + lo.model + ' | Quant: ' + lo.quantization +
+      ' | RAM: ' + lo.ram_required.toFixed(1) + ' GB | TPS: ' + lo.estimated_tps.toFixed(1) +
+      ' | Calidad: ' + lo.quality_score;
+    document.getElementById('local-panel').classList.remove('hidden');
+  }
+  if (data.best_pick) {
+    document.getElementById('best-text').textContent =
+      'Mejor opcion: ' + data.best_pick.provider + ' / ' + data.best_pick.model;
+    document.getElementById('best-panel').classList.remove('hidden');
+  }
+});
+</script>
+{% endblock %}

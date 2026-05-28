@@ -60,3 +60,12 @@ async def page_history(request: Request):
 @router.get("/explain", response_class=HTMLResponse)
 async def page_explain(request: Request):
     return render("explain.html", request)
+
+@router.get("/forecast", response_class=HTMLResponse)
+async def forecast_page(request: Request):
+    return templates.TemplateResponse("forecast.html", {"request": request})
+
+
+@router.get("/optimize", response_class=HTMLResponse)
+async def optimize_page(request: Request):
+    return templates.TemplateResponse("optimize.html", {"request": request})

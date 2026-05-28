@@ -189,6 +189,47 @@ def _collect_checks(system: SystemData) -> list[DiagnosticCheck]:
         value=vulkan,
     ))
 
+    # FP4/FP8 precision check
+    if gpus:
+        from devmind.services.hardware import check_precision_support
+        gpu_name = gpus[0].name if gpus else None
+        prec = check_precision_support(f"{gpus[0].vendor} {gpu_name}" if gpu_name else None)
+        if prec:
+            has_fp4 = prec["precisions"]["FP4"]
+            has_fp8 = prec["precisions"]["FP8"]
+            precs = []
+            if has_fp8:
+                precs.append("FP8")
+            if has_fp4:
+                precs.append("FP4")
+            prec_str = ", ".join(precs) if precs else "FP16"
+            checks.append(DiagnosticCheck(
+                name="Precisiones GPU",
+                category="gpu",
+                severity=Severity.INFO,
+                status="ok",
+                value=prec_str,
+                message=prec.get("notes", ""),
+            ))
+        else:
+            checks.append(DiagnosticCheck(
+                name="Precisiones GPU",
+                category="gpu",
+                severity=Severity.INFO,
+                status="ok",
+                value="FP16 (estandar)",
+                message="No se encontro en tabla de hardware conocida",
+            ))
+    else:
+        checks.append(DiagnosticCheck(
+            name="Precisiones GPU",
+            category="gpu",
+            severity=Severity.INFO,
+            status="ok",
+            value="CPU-only",
+            message="FP4/FP8 requieren GPU dedicada. Las APIs pueden aprovechar estas precisiones del lado del proveedor.",
+        ))
+
     # ── Docker ────────────────────────────────────────────────────────
     docker = check_docker()
     if docker.installed:

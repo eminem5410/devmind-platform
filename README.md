@@ -7,7 +7,7 @@
   <a href="https://pypi.org/project/devmind/"><img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
   <a href="https://pypi.org/project/devmind/"><img src="https://img.shields.io/badge/pip_install-devmind-00d4ff?style=flat-square" alt="PyPI"></a>
   <a href="https://github.com/eminem5410/devmind-platform/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square" alt="License"></a>
-  <a href="https://github.com/eminem5410/devmind-platform/releases"><img src="https://img.shields.io/badge/Version-0.6.0-00d4ff?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/eminem5410/devmind-platform/releases"><img src="https://img.shields.io/badge/Version-0.7.0-00d4ff?style=flat-square" alt="Version"></a>
   <img src="https://img.shields.io/badge/Linux-Ready-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
   <img src="https://img.shields.io/badge/API-FastAPI-009688?style=flat-square" alt="FastAPI">
   <img src="https://img.shields.io/badge/GUI-Pico_CSS-9CF">
@@ -458,10 +458,20 @@ Todos los datos fluyen a traves de modelos Pydantic, lo que permite:
 - ✅ Server-side rendering (no Node.js)
 - ✅ Publicado en [PyPI](https://pypi.org/project/devmind/0.6.0/)
 
-### v0.7.0 — Cloud
-- DevMind Cloud Dashboard
-- Config packs marketplace
-- Shared benchmark database
+### v0.7.0 — Cost Intelligence ✅
+✅ devmind compare — Comparar costo local vs 32 modelos API
+✅ 11 providers: OpenAI, Anthropic, Google, DeepSeek, Groq, Mistral, Cerebras, Together AI, OpenRouter, xAI, Fireworks
+✅ ROI calculator: costo eléctrico local vs API más barata
+✅ Auto-detección de TPS desde último benchmark (SQLite)
+✅ 5 formatos de exportación: JSON, CSV, HTML, Markdown, YAML
+✅ API endpoints: /api/compare, /api/compare/providers
+✅ Página web /compare con filtros interactivos y sliders
+
+### v0.8.0 — Attention Benchmarks
+devmind benchmark attention — Benchmark de ThriftAttention (FP4/FP16 mixed precision)
+devmind forecast — Predicción de costo mensual por volumen
+Detección de hardware FP4 en devmind doctor
+devmind explain attention-precision — Deep dive en precisiones de atención
 
 ## Requisitos
 

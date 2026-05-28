@@ -19,9 +19,9 @@
 
 DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, explica y expone** tu entorno de desarrollo AI en Linux. Detecta tu hardware, verifica herramientas, calcula un health score, repara problemas automaticamente, exporta snapshots, benchmarkea modelos locales, genera ambientes completos con perfiles predefinidos, explica warnings en profundidad, hace seguimiento de todo tu historial de actividad, expone todo via API REST con persistencia en SQLite, y ahora incluye un **Dashboard Web GUI** con 7 paginas interactivas.
 
-## Demo (v0.2.0 — Diagnostics + Repair)
+## Demo (v0.7.0 — Diagnostics + Benchmarks + Cost Intelligence)
 
-<a href="https://asciinema.org/a/Pao5xWmKrGC3BfRU" target="_blank"><img src="https://asciinema.org/a/Pao5xWmKrGC3BfRU.svg" width="720" alt="DevMind Demo"/></a>
+<a href="https://asciinema.org/a/hAxWIC5ohtFpFXZm" target="_blank"><img src="https://asciinema.org/a/hAxWIC5ohtFpFXZm.svg" width="720" alt="DevMind v0.7.0 Demo"/></a>
 
 ## Por que DevMind
 

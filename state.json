@@ -1,0 +1,40 @@
+{
+  "version": "0.3.0",
+  "snapshot_type": "full",
+  "timestamp": "2026-05-28T05:51:51.850827+00:00",
+  "hostname": "xtreme",
+  "hardware": {
+    "cpu_name": "Intel(R) Core(TM) i5-7400 CPU @ 3.00GHz",
+    "cpu_cores": 4,
+    "ram_total_gb": 7.1,
+    "ram_used_gb": 6.4,
+    "ram_usage_pct": 90.1,
+    "disk_total_gb": 456.9,
+    "disk_free_gb": 287.2,
+    "disk_usage_pct": 32.0,
+    "gpu": null
+  },
+  "software": {
+    "os_name": "Linux",
+    "os_version": "#15-Ubuntu SMP PREEMPT_DYNAMIC Wed Apr 22 16:06:43 UTC 2026",
+    "kernel": "7.0.0-15-generic",
+    "arch": "x86_64",
+    "python_version": "3.14.4",
+    "git_version": "2.53.0",
+    "pip_version": "25.1.1",
+    "docker_version": "29.4.3",
+    "docker_compose_version": "v5.1.3",
+    "docker_running": true,
+    "docker_containers_running": 0,
+    "docker_images_count": 15,
+    "ollama_version": "0.24.0",
+    "ollama_running": true,
+    "ollama_models": [
+      "phi3:mini"
+    ]
+  },
+  "network": {
+    "hostname": "xtreme",
+    "ip_local": "127.0.1.1"
+  }
+}

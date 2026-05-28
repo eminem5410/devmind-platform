@@ -26,6 +26,7 @@ from rich.prompt import Confirm, Prompt
 from devmind.utils.ollama import check_ollama
 from devmind.utils.docker import check_docker
 from devmind.utils.system import get_system_info
+from devmind.utils.logging import logger
 
 console = Console()
 repair_app = typer.Typer(
@@ -107,6 +108,8 @@ def ollama(
     ),
 ):
     """Repara Ollama: instala, inicia el servidor y descarga un modelo."""
+    start_time_ollama = time.time()
+    logger.command_start("repair", {"target": "ollama", "model": model, "skip_model": skip_model})
     console.print()
     console.print(Panel(
         "[bold cyan]DevMind Repair[/bold cyan] — Ollama",
@@ -245,13 +248,15 @@ def ollama(
             border_style="yellow",
         ))
     console.print()
+    logger.command_end("repair", time.time() - start_time_ollama)
 
 
 # ── Repair: Docker ────────────────────────────────────────────────────────
 
 @repair_app.command()
 def docker():
-    """Repara Docker: verifica daemon, compose y permisos."""
+    start_time_docker = time.time()
+    logger.command_start("repair", {"target": "docker"})
     console.print()
     console.print(Panel(
         "[bold cyan]DevMind Repair[/bold cyan] — Docker",
@@ -351,6 +356,7 @@ def docker():
         border_style="green",
     ))
     console.print()
+    logger.command_end("repair", time.time() - start_time_docker)
 
 
 # ── Repair: All ───────────────────────────────────────────────────────────

@@ -29,6 +29,7 @@ from devmind.utils.docker import check_docker
 from devmind.utils.ollama import check_ollama
 from devmind.utils.system import get_system_info
 from devmind.utils.recommendations import generate_recommendations
+from devmind.utils.logging import logger
 
 console = Console()
 
@@ -572,6 +573,10 @@ def run_doctor(
         json_output: Si True, imprime el reporte como JSON en vez de Rich.
         compact: Si True, imprime output compacto de una pantalla (CI/scripting).
     """
+    import time
+    start_time = time.time()
+    logger.command_start("doctor", {"json": json_output, "compact": compact})
+
     # 1. Recolectar datos del sistema
     system = _collect_system_data()
 
@@ -590,10 +595,22 @@ def run_doctor(
     # 5. Calcular resumen
     report.compute_summary()
 
-    # 6. Renderizar
+    # 6. Registrar en log estructurado
+    logger.doctor_run(
+        health_score=report.summary.get("health_score", 0),
+        total_checks=report.summary.get("total_checks", 0),
+        warnings=report.summary.get("warnings", 0),
+        errors=report.summary.get("errors", 0),
+        repairable=report.summary.get("repairable", 0),
+    )
+
+    # 7. Renderizar
     if json_output:
         _render_json(report)
     elif compact:
         _render_compact(report)
     else:
         _render_rich(report)
+
+    duration = time.time() - start_time
+    logger.command_end("doctor", duration)

@@ -43,7 +43,7 @@ class BenchmarkComparison(BaseModel):
 
 class BenchmarkReport(BaseModel):
     """Reporte completo de benchmark de Ollama."""
-    version: str = "0.4.0"
+    version: str = "0.5.0"
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     hostname: str = ""
     hardware_summary: str = Field(default="", description="Resumen del hardware del sistema")

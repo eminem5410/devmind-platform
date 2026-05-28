@@ -10,6 +10,7 @@ Comandos:
   devmind explain             Explica warnings y topics en profundidad
   devmind history             Muestra historial de diagnosticos y benchmarks
   devmind setup               Configura ambientes AI con perfiles predefinidos
+  devmind serve               Levanta la API REST (FastAPI + Uvicorn)
   devmind gpu                 Verifica GPUs, drivers CUDA y Vulkan
   devmind init                Inicializa un proyecto de IA con estructura estandar
   devmind repair              Repara problemas detectados automaticamente
@@ -114,6 +115,26 @@ def history(
     run_history(last=last, doctor=doctor, bench=bench, json_output=json_output)
 
 
+@app.command()
+def serve(
+    port: int = typer.Option(
+        8080, "--port", "-p",
+        help="Puerto para la API (default: 8080)",
+    ),
+    host: str = typer.Option(
+        "127.0.0.1", "--host",
+        help="Host para escuchar (default: 127.0.0.1)",
+    ),
+    reload: bool = typer.Option(
+        False, "--reload",
+        help="Auto-reload en desarrollo",
+    ),
+):
+    """Levanta la API REST de DevMind con FastAPI + Uvicorn."""
+    from devmind.commands.serve import run_serve
+    run_serve(port=port, host=host, reload=reload)
+
+
 @app.command(name="setup")
 def setup(
     profile: str = typer.Argument(
@@ -163,7 +184,7 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.4.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.5.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")
@@ -182,6 +203,8 @@ def main(ctx: typer.Context):
         console.print("  [bold]devmind gpu[/bold]              Verifica GPUs y drivers")
         console.print("  [bold]devmind init[/bold]             Inicializa un proyecto de IA")
         console.print("  [bold]devmind repair[/bold]           Repara problemas automaticamente")
+        console.print("  [bold]devmind serve[/bold]             Levanta API REST (FastAPI)")
+        console.print("  [bold]  serve --port 3000[/bold]       Puerto custom")
         console.print("  [bold]  repair ollama[/bold]          Instala/inicia Ollama + modelos")
         console.print("  [bold]  repair docker[/bold]          Verifica/instala Docker + Compose")
         console.print("  [bold]  repair all[/bold]             Repara todo automaticamente")

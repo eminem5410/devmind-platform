@@ -1,0 +1,1 @@
+"""DevMind API — Routes package."""

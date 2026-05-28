@@ -1,0 +1,130 @@
+# DevMind v0.5.0 — Instrucciones de Instalacion
+
+## Que trae v0.5.0
+
+**API REST con FastAPI** — Ahora DevMind puede levantar un servidor HTTP que expone todos los comandos como endpoints REST. Ideal para integrar en dashboards, CI/CD, herramientas propias o una futura GUI.
+
+### Archivos nuevos (10)
+
+| Archivo | Descripcion |
+|---------|-------------|
+| `src/devmind/db/__init__.py` | Package init |
+| `src/devmind/db/models.py` | SQLAlchemy ORM: DoctorRunRecord, BenchmarkRunRecord, SnapshotRecord |
+| `src/devmind/db/database.py` | Engine, session factory, init_db (SQLite en ~/.devmind/devmind.db) |
+| `src/devmind/api/__init__.py` | Package init |
+| `src/devmind/api/main.py` | FastAPI app con CORS + lifespan (init DB al arrancar) |
+| `src/devmind/api/routes/__init__.py` | Package init |
+| `src/devmind/api/routes/doctor.py` | GET /api/doctor -> DiagnosticReport completo |
+| `src/devmind/api/routes/snapshot.py` | GET /api/snapshot -> SnapshotReport completo |
+| `src/devmind/api/routes/benchmark.py` | POST /api/benchmark/ollama -> BenchmarkReport (async) |
+| `src/devmind/api/routes/setup.py` | GET /api/setup/profiles + POST /api/setup/{profile} |
+| `src/devmind/api/routes/history.py` | GET /api/history + /benchmarks + /doctors + /snapshots |
+| `src/devmind/api/routes/explain.py` | GET /api/explain + GET /api/explain/{topic} |
+| `src/devmind/commands/serve.py` | devmind serve CLI command |
+
+### Archivos modificados (3)
+
+| Archivo | Cambio |
+|---------|--------|
+| `cli.py` | Agregado comando serve con --port, --host, --reload |
+| `pyproject.toml` | Version 0.5.0 + deps fastapi, uvicorn, sqlalchemy |
+
+### Dependencias nuevas
+
+- fastapi>=0.111.0
+- uvicorn>=0.30.0
+- sqlalchemy>=2.0.0
+
+---
+
+## Instalacion
+
+```bash
+# 1. Navegar al directorio del proyecto
+cd ~/Escritorio/devmind-platform
+
+# 2. Activar el entorno virtual
+source .venv/bin/activate
+
+# 3. Instalar dependencias nuevas
+pip install fastapi uvicorn sqlalchemy
+
+# 4. Reinstalar DevMind (ya que es editable)
+pip install -e .
+```
+
+---
+
+## Testing rapido
+
+```bash
+# Verificar que el comando existe
+devmind --help
+devmind serve --help
+
+# Levantar el servidor
+devmind serve
+```
+
+En otra terminal:
+
+```bash
+# Health check
+curl http://localhost:8080/api/health
+
+# Version
+curl http://localhost:8080/api/version
+
+# Doctor completo (JSON)
+curl http://localhost:8080/api/doctor | python -m json.tool
+
+# Snapshot
+curl http://localhost:8080/api/snapshot | python -m json.tool
+
+# Explicar un topic
+curl http://localhost:8080/api/explain/ram | python -m json.tool
+
+# Listar perfiles de setup
+curl http://localhost:8080/api/setup/profiles | python -m json.tool
+
+# Historial (despues de ejecutar doctor/benchmark)
+curl http://localhost:8080/api/history | python -m json.tool
+curl http://localhost:8080/api/history/doctors | python -m json.tool
+curl http://localhost:8080/api/history/benchmarks | python -m json.tool
+```
+
+## Endpoints completos
+
+| Method | Endpoint | Descripcion |
+|--------|----------|-------------|
+| GET | /api/health | Health check |
+| GET | /api/version | Version info |
+| GET | /api/doctor | Diagnostico completo |
+| GET | /api/snapshot | Snapshot del sistema |
+| POST | /api/benchmark/ollama | Benchmark Ollama |
+| GET | /api/setup/profiles | Lista perfiles |
+| POST | /api/setup/{profile} | Genera perfil |
+| GET | /api/history | Historial completo |
+| GET | /api/history/doctors | Historial diagnosticos |
+| GET | /api/history/benchmarks | Historial benchmarks |
+| GET | /api/history/snapshots | Historial snapshots |
+| GET | /api/explain | Topics disponibles |
+| GET | /api/explain/{topic} | Explicacion topic |
+
+## Swagger UI
+
+Cuando `devmind serve` este corriendo:
+- http://localhost:8080/docs (Swagger UI)
+- http://localhost:8080/redoc (ReDoc)
+
+## Base de datos
+
+La API guarda automaticamente los resultados en:
+```
+~/.devmind/devmind.db  (SQLite)
+```
+
+Se crea al primer `devmind serve`. Las tablas son:
+- `doctor_runs` — Cada diagnostico ejecutado
+- `benchmark_runs` — Cada benchmark ejecutado
+- `snapshots` — Cada snapshot ejecutado

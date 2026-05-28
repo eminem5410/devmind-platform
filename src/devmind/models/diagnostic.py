@@ -113,7 +113,7 @@ class DiagnosticReport(BaseModel):
     como la salida --json. Toda la logica de recoleccion llena
     este modelo, y luego se renderiza segun el modo solicitado.
     """
-    version: str = "0.4.0"
+    version: str = "0.5.0"
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     system: SystemData = Field(default_factory=SystemData)
     checks: list[DiagnosticCheck] = Field(default_factory=list)

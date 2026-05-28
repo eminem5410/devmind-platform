@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Setup — DevMind{% endblock %}
+
+{% block content %}
+<header>
+    <hgroup>
+        <h1>Setup</h1>
+        <p>Perfiles de configuracion para desarrollo IA</p>
+    </hgroup>
+</header>
+
+<!-- Profiles -->
+<div id="profiles-grid" class="stats-grid">
+    <div class="spinner"></div>
+</div>
+
+<!-- Generate result -->
+<article id="gen-card" style="display:none; margin-top:1.5rem;">
+    <header>
+        <strong id="gen-title">-</strong>
+        <small id="gen-subtitle" style="color:var(--pico-muted-color);"></small>
+    </header>
+    <div id="gen-hardware"></div>
+    <h4>Archivos Generados</h4>
+    <div id="gen-files"></div>
+    <h4>Comandos Post-Setup</h4>
+    <div id="gen-commands"></div>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const profileIcons = { 'local-llm': '💬', 'ai-dev': '🤖', 'rag-lab': '🔬' };
+
+async function loadProfiles() {
+    try {
+        const data = await fetch('/api/setup/profiles').then(r => r.json());
+        document.getElementById('profiles-grid').innerHTML = data.profiles.map(p => `
+            <div class="stat-card" style="cursor:pointer; transition: transform 0.2s;" 
+                 onmouseover="this.style.transform='scale(1.03)'" 
+                 onmouseout="this.style.transform='scale(1)'"
+                 onclick="generateProfile('${p.name}')">
+                <div style="font-size:2.5rem;">${profileIcons[p.name] || '📦'}</div>
+                <div class="value" style="font-size:1.2rem; margin-top:0.5rem;">${p.name}</div>
+                <div class="label">${p.description}</div>
+                <div style="margin-top:0.5rem; font-size:0.8rem;">
+                    ${p.needs_gpu ? '<span class="badge badge-warning">GPU</span> ' : ''}
+                    ${p.needs_docker ? '<span class="badge badge-info">Docker</span> ' : ''}
+                    ${p.needs_ollama ? '<span class="badge badge-info">Ollama</span>' : ''}
+                    <br>RAM min: ${p.min_ram_gb}GB | Disco: ${p.min_disk_gb}GB
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {
+        document.getElementById('profiles-grid').innerHTML = '<p>Error cargando perfiles</p>';
+    }
+}
+
+async function generateProfile(name) {
+    if (!confirm(`Generar perfil "${name}"? (dry run — no se escriben archivos)`)) return;
+
+    try {
+        const resp = await fetch(`/api/setup/${name}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dry_run: true })
+        });
+        const data = await resp.json();
+
+        document.getElementById('gen-title').textContent = `Perfil: ${data.profile}`;
+        document.getElementById('gen-subtitle').textContent = data.description;
+
+        document.getElementById('gen-hardware').innerHTML = `
+            <p><strong>CPU:</strong> ${data.hardware.cpu || '-'} (${data.hardware.cpu_cores || '?'} cores)</p>
+            <p><strong>RAM:</strong> ${data.hardware.ram_gb}GB</p>
+        `;
+
+        const fileNames = Object.keys(data.files || {});
+        document.getElementById('gen-files').innerHTML = fileNames.map(f => `
+            <details style="margin:0.5rem 0; border:1px solid var(--pico-muted-border-color); border-radius:var(--pico-border-radius); padding:0.5rem;">
+                <summary><strong>${f}</strong> <small>(${data.files[f].size_bytes} bytes)</small></summary>
+                <pre style="font-size:0.8rem; overflow-x:auto; max-height:300px;">${data.files[f].content}</pre>
+            </details>
+        `).join('');
+
+        const cmds = data.post_setup_commands || [];
+        document.getElementById('gen-commands').innerHTML = cmds.length ? cmds.map(c => `<pre><code>${c}</code></pre>`).join('') : '<p style="color:var(--pico-muted-color)">Sin comandos adicionales.</p>';
+
+        document.getElementById('gen-card').style.display = 'block';
+    } catch(e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+loadProfiles();
+</script>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — DevMind{% endblock %}
+
+{% block content %}
+<header>
+    <hgroup>
+        <h1>Dashboard</h1>
+        <p>Vista general del sistema &mdash; <span id="status-text">Cargando...</span></p>
+    </hgroup>
+</header>
+
+<div class="actions-bar">
+    <button class="contrast" onclick="loadDoctor()">Run Doctor</button>
+    <button onclick="loadSnapshot()">Snapshot</button>
+    <button onclick="location.href='/benchmarks'">Benchmark</button>
+    <button onclick="location.href='/setup'">Setup</button>
+</div>
+
+<article id="health-card" style="text-align:center; padding:2rem;">
+    <div class="spinner"></div>
+    <p>Cargando diagnostico...</p>
+</article>
+
+<article id="system-card">
+    <header><strong>Sistema</strong></header>
+    <div class="stats-grid" id="system-stats">
+        <div class="stat-card"><div class="value">-</div><div class="label">CPU</div></div>
+        <div class="stat-card"><div class="value">-</div><div class="label">RAM</div></div>
+        <div class="stat-card"><div class="value">-</div><div class="label">Disco libre</div></div>
+        <div class="stat-card"><div class="value">-</div><div class="label">OS</div></div>
+    </div>
+</article>
+
+<article id="history-card">
+    <header><strong>Actividad Reciente</strong></header>
+    <div id="recent-history" style="font-size:0.9rem; color:var(--pico-muted-color);">
+        <div class="spinner"></div> Cargando historial...
+    </div>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function healthClass(score) {
+    if (score >= 90) return 'excellent';
+    if (score >= 75) return 'good';
+    if (score >= 50) return 'acceptable';
+    if (score >= 25) return 'bad';
+    return 'critical';
+}
+
+async function fetchJSON(url) {
+    const r = await fetch(url);
+    return r.json();
+}
+
+async function loadHealth() {
+    const data = await fetchJSON('/api/health');
+    document.getElementById('status-text').textContent = 'API ' + data.status + ' v' + data.version;
+}
+
+async function loadDoctor() {
+    const card = document.getElementById('health-card');
+    card.innerHTML = '<div class="spinner"></div><p>Ejecutando diagnostico...</p>';
+    try {
+        const data = await fetchJSON('/api/doctor');
+        const s = data.summary;
+        card.innerHTML = '<div class="health-score ' + healthClass(s.health_score) + '">' + s.health_score + '</div>' +
+            '<p style="font-size:1.2rem; font-weight:600; margin-top:0.5rem;">' + s.health_label + '</p>' +
+            '<div class="stats-grid" style="margin-top:1rem;">' +
+            '<div class="stat-card"><div class="value">' + s.total_checks + '</div><div class="label">Checks</div></div>' +
+            '<div class="stat-card"><div class="value" style="color:#f1c40f">' + s.warnings + '</div><div class="label">Warnings</div></div>' +
+            '<div class="stat-card"><div class="value" style="color:#e74c3c">' + s.errors + '</div><div class="label">Errors</div></div>' +
+            '<div class="stat-card"><div class="value">' + s.critical + '</div><div class="label">Critical</div></div>' +
+            '</div>';
+        const hw = data.system;
+        document.getElementById('system-stats').innerHTML =
+            '<div class="stat-card"><div class="value">' + hw.cpu_cores + 'c</div><div class="label">' + (hw.cpu_name || 'CPU') + '</div></div>' +
+            '<div class="stat-card"><div class="value">' + (hw.ram_total_gb || '?') + 'GB</div><div class="label">' + (hw.ram_used_gb || '?') + ' / ' + (hw.ram_total_gb || '?') + ' GB</div></div>' +
+            '<div class="stat-card"><div class="value">' + (hw.disk_free_gb || '?') + 'GB</div><div class="label">Disco libre</div></div>' +
+            '<div class="stat-card"><div class="value">' + (hw.os_name || '?') + '</div><div class="label">' + (hw.os_version || '') + ' ' + (hw.arch || '') + '</div></div>';
+    } catch(e) {
+        card.innerHTML = '<p style="color:var(--pico-del-color)">Error al ejecutar diagnostico</p>';
+    }
+}
+
+async function loadSnapshot() {
+    try { await fetchJSON('/api/snapshot'); loadHistory(); } catch(e) {}
+}
+
+async function loadHistory() {
+    try {
+        const data = await fetchJSON('/api/history');
+        let html = '';
+        if (data.doctors.total > 0) { const d = data.doctors.entries[0]; html += '<p>Ultimo doctor: <strong>' + d.health_score + '/100</strong> — ' + (d.timestamp ? new Date(d.timestamp).toLocaleString('es') : '?') + '</p>'; }
+        if (data.benchmarks.total > 0) { const b = data.benchmarks.entries[0]; html += '<p>Ultimo benchmark: <strong>' + b.model + '</strong> — ' + (b.success ? b.tokens_per_sec + ' tok/s' : 'Fallido') + '</p>'; }
+        if (data.snapshots.total > 0) { const s = data.snapshots.entries[0]; html += '<p>Ultimo snapshot: <strong>' + s.hostname + '</strong> — ' + (s.timestamp ? new Date(s.timestamp).toLocaleString('es') : '?') + '</p>'; }
+        if (!html) html = '<p>Sin actividad reciente. Ejecuta un <strong>Doctor</strong> o <strong>Snapshot</strong>.</p>';
+        document.getElementById('recent-history').innerHTML = html;
+    } catch(e) {
+        document.getElementById('recent-history').innerHTML = '<p>No se pudo cargar el historial.</p>';
+    }
+}
+
+loadHealth();
+loadDoctor();
+loadHistory();
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DevMind{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <style>
+        nav { padding: 0.8rem 1.5rem !important; }
+        nav a { font-weight: 500; }
+        .health-score { font-size: 4rem; font-weight: 800; line-height: 1; }
+        .health-score.excellent { color: #2ecc71; }
+        .health-score.good      { color: #f1c40f; }
+        .health-score.acceptable{ color: #e67e22; }
+        .health-score.bad       { color: #e74c3c; }
+        .health-score.critical  { color: #c0392b; }
+        .badge { padding: 0.15rem 0.6rem; border-radius: 0.3rem; font-size: 0.8rem; font-weight: 600; }
+        .badge-info    { background: #1a5276; color: #85c1e9; }
+        .badge-warning { background: #7d6608; color: #f9e79f; }
+        .badge-error   { background: #78281f; color: #f1948a; }
+        .badge-critical{ background: #922b21; color: #f5b7b1; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .stat-card { background: var(--pico-card-background-color); border: var(--pico-border-width) solid var(--pico-card-border-color); border-radius: var(--pico-border-radius); padding: 1rem; text-align: center; }
+        .stat-card .value { font-size: 2rem; font-weight: 700; }
+        .stat-card .label { font-size: 0.85rem; color: var(--pico-muted-color); }
+        table th { font-size: 0.85rem; }
+        table td { font-size: 0.9rem; }
+        .spinner { display: inline-block; width: 1.2rem; height: 1.2rem; border: 2px solid var(--pico-muted-color); border-top-color: var(--pico-primary); border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .actions-bar { display: flex; gap: 0.8rem; flex-wrap: wrap; margin: 1.5rem 0; align-items: center; }
+        .chart-container { position: relative; height: 280px; margin: 1rem 0; }
+        .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--pico-muted-border-color); margin-bottom: 1rem; }
+        .tabs a { padding: 0.6rem 1.2rem; color: var(--pico-muted-color); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -2px; font-weight: 500; }
+        .tabs a:hover { color: var(--pico-primary); }
+        .tabs a.active { color: var(--pico-primary); border-bottom-color: var(--pico-primary); }
+        footer { text-align: center; padding: 2rem 1rem; color: var(--pico-muted-color); font-size: 0.8rem; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong><a href="/" style="color: var(--pico-primary);">DevMind</a></strong></li>
+            <li><a href="/">Dashboard</a></li>
+            <li><a href="/doctor">Doctor</a></li>
+            <li><a href="/snapshots">Snapshots</a></li>
+            <li><a href="/benchmarks">Benchmarks</a></li>
+            <li><a href="/setup">Setup</a></li>
+            <li><a href="/history">History</a></li>
+            <li><a href="/explain">Explain</a></li>
+        </ul>
+        <ul>
+            <li><a href="/api/docs" target="_blank">API Docs</a></li>
+            <li><span style="font-size:0.8rem; color:var(--pico-muted-color)">v0.6.0</span></li>
+        </ul>
+    </nav>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        DevMind Platform v0.6.0 &mdash; Herramientas CLI para desarrollo de IA en Linux
+        &bull; <a href="https://github.com/eminem5410/devmind-platform">GitHub</a>
+    </footer>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

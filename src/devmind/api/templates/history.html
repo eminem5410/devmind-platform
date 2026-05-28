@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}History — DevMind{% endblock %}
+
+{% block content %}
+<header>
+    <hgroup>
+        <h1>Historial</h1>
+        <p>Registro de actividad del sistema</p>
+    </hgroup>
+</header>
+
+<div class="tabs">
+    <a href="#" class="active" onclick="showTab('doctors', this); return false;">Doctors</a>
+    <a href="#" onclick="showTab('benchmarks', this); return false;">Benchmarks</a>
+    <a href="#" onclick="showTab('snapshots', this); return false;">Snapshots</a>
+</div>
+
+<div id="tab-doctors">
+    <article>
+        <header><strong>Historial de Diagnosticos</strong></header>
+        <table>
+            <thead><tr><th>ID</th><th>Fecha</th><th>Health</th><th>Checks</th><th>Warnings</th><th>Errors</th><th>Critical</th></tr></thead>
+            <tbody id="doctors-body"><tr><td colspan="7" style="text-align:center;"><div class="spinner"></div></td></tr></tbody>
+        </table>
+    </article>
+</div>
+
+<div id="tab-benchmarks" style="display:none;">
+    <article>
+        <header><strong>Historial de Benchmarks</strong></header>
+        <table>
+            <thead><tr><th>ID</th><th>Fecha</th><th>Modelo</th><th>Tokens/s</th><th>TTFT</th><th>RAM</th><th>Estado</th></tr></thead>
+            <tbody id="benchmarks-body"><tr><td colspan="7" style="text-align:center;"><div class="spinner"></div></td></tr></tbody>
+        </table>
+    </article>
+</div>
+
+<div id="tab-snapshots" style="display:none;">
+    <article>
+        <header><strong>Historial de Snapshots</strong></header>
+        <table>
+            <thead><tr><th>ID</th><th>Fecha</th><th>Hostname</th></tr></thead>
+            <tbody id="snapshots-body"><tr><td colspan="3" style="text-align:center;"><div class="spinner"></div></td></tr></tbody>
+        </table>
+    </article>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function showTab(tab, el) {
+    document.querySelectorAll('.tabs a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    ['doctors', 'benchmarks', 'snapshots'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+    });
+}
+
+async function loadHistory() {
+    try {
+        const [docData, benchData, snapData] = await Promise.all([
+            fetch('/api/history/doctors').then(r => r.json()),
+            fetch('/api/history/benchmarks').then(r => r.json()),
+            fetch('/api/history/snapshots').then(r => r.json()),
+        ]);
+
+        document.getElementById('doctors-body').innerHTML = docData.entries.map(d => {
+            const hc = d.health_score >= 90 ? '#2ecc71' : d.health_score >= 75 ? '#f1c40f' : d.health_score >= 50 ? '#e67e22' : '#e74c3c';
+            return `<tr>
+                <td>${d.id}</td>
+                <td>${d.timestamp ? new Date(d.timestamp).toLocaleString('es') : '-'}</td>
+                <td><strong style="color:${hc}">${d.health_score}</strong></td>
+                <td>${d.total_checks}</td>
+                <td>${d.warnings}</td>
+                <td>${d.errors}</td>
+                <td>${d.critical}</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--pico-muted-color);">Sin diagnosticos</td></tr>';
+
+        document.getElementById('benchmarks-body').innerHTML = benchData.entries.map(b => `
+            <tr>
+                <td>${b.id}</td>
+                <td>${b.timestamp ? new Date(b.timestamp).toLocaleString('es') : '-'}</td>
+                <td><strong>${b.model}</strong></td>
+                <td>${b.tokens_per_sec || '-'}</td>
+                <td>${b.ttft_ms || '-'}ms</td>
+                <td>${b.peak_ram_mb || '-'}MB</td>
+                <td>${b.success ? '<span style="color:#2ecc71">OK</span>' : '<span style="color:#e74c3c">Fail</span>'}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--pico-muted-color);">Sin benchmarks</td></tr>';
+
+        document.getElementById('snapshots-body').innerHTML = snapData.entries.map(s => `
+            <tr>
+                <td>${s.id}</td>
+                <td>${s.timestamp ? new Date(s.timestamp).toLocaleString('es') : '-'}</td>
+                <td>${s.hostname}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--pico-muted-color);">Sin snapshots</td></tr>';
+    } catch(e) {}
+}
+
+loadHistory();
+</script>
+{% endblock %}

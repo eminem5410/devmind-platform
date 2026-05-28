@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Benchmarks — DevMind{% endblock %}
+
+{% block content %}
+<header>
+    <hgroup>
+        <h1>Benchmarks Ollama</h1>
+        <p>Medir rendimiento de modelos locales</p>
+    </hgroup>
+</header>
+
+<div class="actions-bar">
+    <label><strong>Modelo:</strong></label>
+    <input type="text" id="model-input" placeholder="phi3:mini" style="width:180px;">
+    <label><strong>Runs:</strong></label>
+    <input type="number" id="runs-input" value="3" min="1" max="10" style="width:80px;">
+    <button class="contrast" id="bench-btn" onclick="runBenchmark()">Ejecutar</button>
+</div>
+
+<article id="result-card" style="display:none;">
+    <header>
+        <strong>Resultados del Benchmark</strong>
+        <small id="bench-time" style="float:right; color:var(--pico-muted-color);"></small>
+    </header>
+
+    <div class="stats-grid" id="bench-summary"></div>
+
+    <!-- Chart -->
+    <div class="chart-container">
+        <canvas id="bench-chart"></canvas>
+    </div>
+
+    <!-- Results table -->
+    <table id="bench-table">
+        <thead><tr><th>Run</th><th>Modelo</th><th>Tokens/s</th><th>TTFT (ms)</th><th>Tokens</th><th>RAM (MB)</th><th>Estado</th></tr></thead>
+        <tbody id="bench-body"></tbody>
+    </table>
+</article>
+
+<article id="loading-card" style="text-align:center; padding:2rem; display:none;">
+    <div class="spinner"></div>
+    <p style="margin-top:0.5rem;">Ejecutando benchmark...</p>
+</article>
+
+<!-- History -->
+<article>
+    <header><strong>Historial de Benchmarks</strong></header>
+    <div class="chart-container">
+        <canvas id="history-chart"></canvas>
+    </div>
+    <table>
+        <thead><tr><th>ID</th><th>Modelo</th><th>Tokens/s</th><th>TTFT</th><th>RAM</th><th>Estado</th><th>Timestamp</th></tr></thead>
+        <tbody id="bench-history"></tbody>
+    </table>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let benchChart = null;
+let historyChart = null;
+
+function buildChart(canvasId, labels, data, label, color) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    if (canvasId === 'bench-chart' && benchChart) benchChart.destroy();
+    if (canvasId === 'history-chart' && historyChart) historyChart.destroy();
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{ label: label, data: data, backgroundColor: color, borderRadius: 4 }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+    if (canvasId === 'bench-chart') benchChart = chart;
+    else historyChart = chart;
+}
+
+async function runBenchmark() {
+    const btn = document.getElementById('bench-btn');
+    const loading = document.getElementById('loading-card');
+    btn.disabled = true;
+    loading.style.display = 'block';
+
+    const model = document.getElementById('model-input').value || undefined;
+    const runs = parseInt(document.getElementById('runs-input').value) || 1;
+
+    try {
+        const resp = await fetch('/api/benchmark/ollama', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, runs })
+        });
+        const data = await resp.json();
+        const s = data.summary;
+
+        document.getElementById('bench-time').textContent = new Date().toLocaleString('es');
+
+        document.getElementById('bench-summary').innerHTML = `
+            <div class="stat-card"><div class="value">${s.models_tested.join(', ')}</div><div class="label">Modelos</div></div>
+            <div class="stat-card"><div class="value">${s.avg_tokens_per_sec}</div><div class="label">Tokens/s (avg)</div></div>
+            <div class="stat-card"><div class="value">${s.avg_ttft_ms}ms</div><div class="label">TTFT (avg)</div></div>
+            <div class="stat-card"><div class="value">${s.avg_peak_ram_mb}MB</div><div class="label">RAM Pico (avg)</div></div>
+            <div class="stat-card"><div class="value">${s.total_tokens_generated}</div><div class="label">Tokens Total</div></div>
+            <div class="stat-card"><div class="value">${s.benchmarks_ok}/${s.benchmarks_total}</div><div class="label">OK/Total</div></div>
+        `;
+
+        // Chart
+        const labels = data.results.map((_, i) => `Run ${i+1}`);
+        const tps = data.results.map(r => r.success ? r.tokens_per_sec : 0);
+        buildChart('bench-chart', labels, tps, 'Tokens/s', '#2ecc71');
+
+        // Table
+        document.getElementById('bench-body').innerHTML = data.results.map((r, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td>${r.model}</td>
+                <td><strong>${r.success ? r.tokens_per_sec : '-'}</strong></td>
+                <td>${r.success ? r.ttft_ms : '-'}</td>
+                <td>${r.total_tokens}</td>
+                <td>${r.peak_ram_mb}</td>
+                <td>${r.success ? '<span style="color:#2ecc71">OK</span>' : '<span style="color:#e74c3c">Error</span>'}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('result-card').style.display = 'block';
+        loadHistory();
+    } catch(e) {
+        loading.innerHTML = `<p style="color:var(--pico-del-color)">Error: ${e.message}</p>`;
+    }
+
+    loading.style.display = 'none';
+    btn.disabled = false;
+}
+
+async function loadHistory() {
+    try {
+        const data = await fetch('/api/history/benchmarks').then(r => r.json());
+        document.getElementById('bench-history').innerHTML = data.entries.map(b => `
+            <tr>
+                <td>${b.id}</td>
+                <td>${b.model}</td>
+                <td><strong>${b.tokens_per_sec || '-'}</strong></td>
+                <td>${b.ttft_ms || '-'}ms</td>
+                <td>${b.peak_ram_mb || '-'}MB</td>
+                <td>${b.success ? '<span style="color:#2ecc71">OK</span>' : '<span style="color:#e74c3c">Fail</span>'}</td>
+                <td>${b.timestamp ? new Date(b.timestamp).toLocaleString('es') : '-'}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--pico-muted-color);">Sin benchmarks</td></tr>';
+
+        // History chart
+        if (data.entries.length > 0) {
+            const labels = data.entries.slice(0, 15).reverse().map((e, i) => `#${e.id}`);
+            const tps = data.entries.slice(0, 15).reverse().map(e => e.tokens_per_sec || 0);
+            buildChart('history-chart', labels, tps, 'Tokens/s', '#3498db');
+        }
+    } catch(e) {}
+}
+
+loadHistory();
+</script>
+{% endblock %}

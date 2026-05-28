@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor — DevMind{% endblock %}
+
+{% block content %}
+<header>
+    <hgroup>
+        <h1>Doctor</h1>
+        <p>Diagnostico completo del sistema</p>
+    </hgroup>
+</header>
+
+<div class="actions-bar">
+    <button class="contrast" id="run-btn" onclick="runDoctor()">Ejecutar Doctor</button>
+</div>
+
+<article id="result-card" style="display:none;">
+    <header>
+        <strong>Resultado del Diagnostico</strong>
+        <small id="result-time" style="float:right; color:var(--pico-muted-color);"></small>
+    </header>
+    <div style="text-align:center; padding:1.5rem 0;">
+        <div class="health-score" id="health-score">-</div>
+        <p id="health-label" style="font-size:1.2rem; font-weight:600;"></p>
+    </div>
+    <div class="stats-grid" id="summary-stats"></div>
+    <h4>Checks Detallados</h4>
+    <table id="checks-table">
+        <thead><tr><th>Check</th><th>Categoria</th><th>Estado</th><th>Valor</th><th>Mensaje</th></tr></thead>
+        <tbody id="checks-body"></tbody>
+    </table>
+    <div id="recs-section" style="display:none;">
+        <h4>Recomendaciones</h4>
+        <div id="recs-list"></div>
+    </div>
+</article>
+
+<article id="loading-card" style="text-align:center; padding:2rem; display:none;">
+    <div class="spinner"></div>
+    <p style="margin-top:0.5rem;">Ejecutando diagnostico...</p>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function severityClass(s) {
+    var m = { INFO: 'badge-info', WARNING: 'badge-warning', ERROR: 'badge-error', CRITICAL: 'badge-critical' };
+    return m[s] || 'badge-info';
+}
+function healthClass(score) {
+    if (score >= 90) return 'excellent';
+    if (score >= 75) return 'good';
+    if (score >= 50) return 'acceptable';
+    if (score >= 25) return 'bad';
+    return 'critical';
+}
+
+async function runDoctor() {
+    var btn = document.getElementById('run-btn');
+    var loading = document.getElementById('loading-card');
+    var result = document.getElementById('result-card');
+    btn.disabled = true;
+    loading.style.display = 'block';
+    result.style.display = 'none';
+    try {
+        var resp = await fetch('/api/doctor');
+        var json = await resp.json();
+        var s = json.summary;
+        document.getElementById('result-time').textContent = new Date().toLocaleString('es');
+        document.getElementById('health-score').textContent = s.health_score;
+        document.getElementById('health-score').className = 'health-score ' + healthClass(s.health_score);
+        document.getElementById('health-label').textContent = s.health_label;
+        document.getElementById('summary-stats').innerHTML =
+            '<div class="stat-card"><div class="value">' + s.total_checks + '</div><div class="label">Total</div></div>' +
+            '<div class="stat-card"><div class="value" style="color:#85c1e9">' + s.info + '</div><div class="label">Info</div></div>' +
+            '<div class="stat-card"><div class="value" style="color:#f1c40f">' + s.warnings + '</div><div class="label">Warnings</div></div>' +
+            '<div class="stat-card"><div class="value" style="color:#e74c3c">' + s.errors + '</div><div class="label">Errors</div></div>' +
+            '<div class="stat-card"><div class="value" style="color:#c0392b">' + s.critical + '</div><div class="label">Critical</div></div>' +
+            '<div class="stat-card"><div class="value">' + s.recommendations + '</div><div class="label">Recomendaciones</div></div>';
+        document.getElementById('checks-body').innerHTML = json.checks.map(function(c) {
+            return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.category + '</td><td><span class="badge ' + severityClass(c.severity) + '">' + c.severity + '</span></td><td>' + (c.value || '-') + '</td><td>' + (c.message || '-') + '</td></tr>';
+        }).join('');
+        var recsSection = document.getElementById('recs-section');
+        var recsList = document.getElementById('recs-list');
+        if (json.recommendations && json.recommendations.length > 0) {
+            recsSection.style.display = 'block';
+            recsList.innerHTML = json.recommendations.map(function(r) {
+                return '<details style="margin:0.5rem 0; padding:0.8rem; border:1px solid var(--pico-muted-border-color); border-radius:var(--pico-border-radius);"><summary><span class="badge ' + severityClass(r.severity) + '">' + r.severity + '</span> <strong>' + r.title + '</strong>' + (r.repairable ? ' <small style="color:#2ecc71;">(Reparable)</small>' : '') + '</summary><p>' + r.message + '</p>' + (r.command ? '<pre><code>' + r.command + '</code></pre>' : '') + '</details>';
+            }).join('');
+        } else { recsSection.style.display = 'none'; }
+        result.style.display = 'block';
+    } catch(e) { loading.innerHTML = '<p style="color:var(--pico-del-color)">Error: ' + e.message + '</p>'; }
+    loading.style.display = 'none';
+    btn.disabled = false;
+}
+</script>
+{% endblock %}

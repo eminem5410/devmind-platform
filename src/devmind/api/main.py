@@ -1,7 +1,7 @@
 """
 DevMind API — FastAPI application.
 
-Endpoints:
+Endpoints JSON:
   GET  /api/health         Health check
   GET  /api/version        Version info
   GET  /api/doctor         Diagnostico completo del sistema
@@ -15,6 +15,15 @@ Endpoints:
   GET  /api/history/snapshots  Historial de snapshots
   GET  /api/explain            Topics disponibles
   GET  /api/explain/{topic}    Explicacion de un topic
+
+Paginas HTML (v0.6.0):
+  GET  /          Dashboard
+  GET  /doctor    Doctor
+  GET  /snapshots Snapshots
+  GET  /benchmarks Benchmarks
+  GET  /setup     Setup
+  GET  /history   History
+  GET  /explain   Explain
 """
 
 from __future__ import annotations
@@ -23,6 +32,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from devmind.db.database import init_db
 
@@ -37,11 +47,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="DevMind API",
     description="API REST para DevMind Platform — Herramientas CLI para desarrollo de IA",
-    version="0.5.0",
+    version="0.6.0",
     lifespan=lifespan,
 )
 
-# CORS: permitir todas las origines para desarrollo
+# CORS: permitir todas las origenes para desarrollo
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -49,6 +59,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Static files
+app.mount("/static", StaticFiles(directory="src/devmind/api/static"), name="static")
 
 
 # ── Health & Version ────────────────────────────────────────────────────────
@@ -59,7 +72,7 @@ async def health():
     return {
         "status": "ok",
         "service": "devmind-api",
-        "version": "0.5.0",
+        "version": "0.6.0",
     }
 
 
@@ -68,7 +81,7 @@ async def version():
     """Version info."""
     return {
         "name": "DevMind Platform",
-        "version": "0.5.0",
+        "version": "0.6.0",
         "api_version": "v1",
     }
 
@@ -81,6 +94,7 @@ from devmind.api.routes.benchmark import router as benchmark_router
 from devmind.api.routes.setup import router as setup_router
 from devmind.api.routes.history import router as history_router
 from devmind.api.routes.explain import router as explain_router
+from devmind.api.routes.web import router as web_router
 
 app.include_router(doctor_router)
 app.include_router(snapshot_router)
@@ -88,3 +102,4 @@ app.include_router(benchmark_router)
 app.include_router(setup_router)
 app.include_router(history_router)
 app.include_router(explain_router)
+app.include_router(web_router)

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Snapshots — DevMind{% endblock %}
+
+{% block content %}
+<header>
+    <hgroup>
+        <h1>Snapshots</h1>
+        <p>Observabilidad del sistema</p>
+    </hgroup>
+</header>
+
+<div class="actions-bar">
+    <button class="contrast" id="snap-btn" onclick="takeSnapshot()">Tomar Snapshot</button>
+</div>
+
+<article id="snapshot-card" style="display:none;">
+    <header>
+        <strong id="snap-hostname">-</strong>
+        <small id="snap-time" style="float:right; color:var(--pico-muted-color);"></small>
+    </header>
+    <h4>Hardware</h4>
+    <div class="stats-grid" id="hw-stats"></div>
+    <div id="gpu-section" style="display:none;"><h4>GPU</h4><div id="gpu-info"></div></div>
+    <h4>Software</h4>
+    <table id="sw-table">
+        <thead><tr><th>Componente</th><th>Version</th><th>Estado</th></tr></thead>
+        <tbody id="sw-body"></tbody>
+    </table>
+    <h4>Red</h4>
+    <div id="net-info"></div>
+</article>
+
+<article id="loading-card" style="text-align:center; padding:2rem; display:none;">
+    <div class="spinner"></div>
+    <p style="margin-top:0.5rem;">Capturando snapshot...</p>
+</article>
+
+<article id="history-card">
+    <header><strong>Historial de Snapshots</strong></header>
+    <table>
+        <thead><tr><th>ID</th><th>Hostname</th><th>Timestamp</th></tr></thead>
+        <tbody id="snap-history"></tbody>
+    </table>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function takeSnapshot() {
+    var btn = document.getElementById('snap-btn');
+    var loading = document.getElementById('loading-card');
+    btn.disabled = true;
+    loading.style.display = 'block';
+    try {
+        var data = await fetch('/api/snapshot').then(function(r) { return r.json(); });
+        document.getElementById('snap-hostname').textContent = data.hostname || 'Sistema';
+        document.getElementById('snap-time').textContent = data.timestamp ? new Date(data.timestamp).toLocaleString('es') : '';
+        var hw = data.hardware;
+        document.getElementById('hw-stats').innerHTML =
+            '<div class="stat-card"><div class="value">' + hw.cpu_cores + 'c</div><div class="label">' + (hw.cpu_name || 'CPU') + '</div></div>' +
+            '<div class="stat-card"><div class="value">' + (hw.ram_total_gb || '?') + 'GB</div><div class="label">' + (hw.ram_used_gb || '?') + ' / ' + (hw.ram_total_gb || '?') + ' (' + (hw.ram_usage_pct || '?') + '%)</div></div>' +
+            '<div class="stat-card"><div class="value">' + (hw.disk_free_gb || '?') + 'GB</div><div class="label">' + (hw.disk_total_gb || '?') + ' total (' + (hw.disk_usage_pct || '?') + '%)</div></div>';
+        if (hw.gpu && hw.gpu.length > 0) {
+            document.getElementById('gpu-section').style.display = 'block';
+            document.getElementById('gpu-info').innerHTML = hw.gpu.map(function(g) {
+                return '<div class="stat-card"><div class="value">' + (g.name || 'GPU') + '</div><div class="label">' + (g.memory ? g.memory + ' VRAM' : '') + '</div></div>';
+            }).join('');
+        }
+        var sw = data.software;
+        var rows = [['OS', sw.os_name + ' ' + sw.os_version], ['Kernel', sw.kernel], ['Arch', sw.arch], ['Python', sw.python_version], ['Git', sw.git_version || 'No instalado'], ['Docker', sw.docker_version || 'No instalado', sw.docker_running ? '🟢' : '🔴'], ['Ollama', sw.ollama_version || 'No instalado', sw.ollama_running ? '🟢' : '🔴']];
+        document.getElementById('sw-body').innerHTML = rows.map(function(r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + (r[2] || '') + '</td></tr>'; }).join('');
+        var net = data.network;
+        document.getElementById('net-info').innerHTML = '<p><strong>Hostname:</strong> ' + net.hostname + '</p><p><strong>IP Local:</strong> ' + (net.ip_local || '-') + '</p>';
+        document.getElementById('snapshot-card').style.display = 'block';
+        loadHistory();
+    } catch(e) { loading.innerHTML = '<p style="color:var(--pico-del-color)">Error: ' + e.message + '</p>'; }
+    loading.style.display = 'none';
+    btn.disabled = false;
+}
+
+async function loadHistory() {
+    try {
+        var data = await fetch('/api/history/snapshots').then(function(r) { return r.json(); });
+        document.getElementById('snap-history').innerHTML = data.entries.map(function(s) {
+            return '<tr><td>' + s.id + '</td><td>' + s.hostname + '</td><td>' + (s.timestamp ? new Date(s.timestamp).toLocaleString('es') : '-') + '</td></tr>';
+        }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--pico-muted-color);">Sin snapshots</td></tr>';
+    } catch(e) {}
+}
+
+loadHistory();
+</script>
+{% endblock %}

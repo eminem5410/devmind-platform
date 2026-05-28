@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Explain — DevMind{% endblock %}
+
+{% block content %}
+<header>
+    <hgroup>
+        <h1>Explain</h1>
+        <p>Conceptos de IA explicados en profundidad</p>
+    </hgroup>
+</header>
+
+<!-- Topics -->
+<div class="tabs" id="topics-tabs"></div>
+
+<!-- Content -->
+<article id="topic-card" style="display:none;">
+    <header><strong id="topic-title">-</strong></header>
+    <div id="topic-content" style="line-height:1.8;"></div>
+</article>
+
+<article id="topic-loading" style="text-align:center; padding:2rem;">
+    <p style="color:var(--pico-muted-color);">Selecciona un topic para aprender.</p>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const topicIcons = { ram: '🧠', gpu: '🎮', python: '🐍', ollama: '🦙', docker: '🐳' };
+let activeTopic = null;
+
+async function loadTopics() {
+    try {
+        const data = await fetch('/api/explain').then(r => r.json());
+        document.getElementById('topics-tabs').innerHTML = data.topics.map(t => `
+            <a href="#" onclick="loadTopic('${t}', this); return false;">${topicIcons[t] || ''} ${t}</a>
+        `).join('');
+    } catch(e) {}
+}
+
+async function loadTopic(topic, el) {
+    if (activeTopic === topic) return;
+    activeTopic = topic;
+
+    document.querySelectorAll('#topics-tabs a').forEach(a => a.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    const loading = document.getElementById('topic-loading');
+    const card = document.getElementById('topic-card');
+    loading.style.display = 'block';
+    loading.innerHTML = '<div class="spinner"></div>';
+    card.style.display = 'none';
+
+    try {
+        const data = await fetch(`/api/explain/${topic}`).then(r => r.json());
+        document.getElementById('topic-title').textContent = topicIcons[topic] + ' ' + topic.toUpperCase();
+
+        // Simple markdown-like rendering
+        const content = data.content
+            .replace(/^### (.+)$/gm, '<h4>$1</h4>')
+            .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+            .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n- /g, '<br>&bull; ');
+        document.getElementById('topic-content').innerHTML = `<p>${content}</p>`;
+        card.style.display = 'block';
+    } catch(e) {
+        loading.innerHTML = `<p style="color:var(--pico-del-color)">Error cargando topic</p>`;
+    }
+    loading.style.display = 'none';
+}
+
+loadTopics();
+</script>
+{% endblock %}

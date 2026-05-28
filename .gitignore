@@ -8,3 +8,4 @@ build/
 .idea/
 .DS_Store
 *.cast
+state.json

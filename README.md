@@ -18,7 +18,7 @@ DevMind es una CLI que **diagnostica, recomienda y repara** tu entorno de desarr
 
 ## Demo
 
-<a href="https://asciinema.org/a/QZkKKeT1tpmaomC6" target="_blank"><img src="https://asciinema.org/a/QZkKKeT1tpmaomC6.svg" width="720" alt="DevMind Demo"/></a>
+<a href="https://asciinema.org/a/Pao5xWmKrGC3BfRU" target="_blank"><img src="https://asciinema.org/a/Pao5xWmKrGC3BfRU.svg" width="720" alt="DevMind Demo"/></a>
 
 ## Por qué DevMind
 

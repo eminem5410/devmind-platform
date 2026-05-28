@@ -67,7 +67,7 @@ class SnapshotReport(BaseModel):
     Este modelo es serializable a JSON y YAML.
     Incluye metadata del snapshot para trazabilidad.
     """
-    version: str = "0.3.0"
+    version: str = "0.4.0"
     snapshot_type: str = "full"
     timestamp: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat(),

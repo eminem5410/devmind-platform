@@ -53,8 +53,8 @@ def _get_openwebui_port(has_gpu: bool) -> str:
 
 
 def generate_local_llm_profile(ram_gb: float, has_gpu: bool,
-                                ollama_version: Optional[str] = None,
-                                python_version: str = "3.12") -> SetupProfile:
+                                python_version: str = "3.12",
+                                ollama_version: Optional[str] = None) -> SetupProfile:
     """Genera el perfil local-llm: Ollama + OpenWebUI para chat local."""
     model = _recommended_model(ram_gb, has_gpu)
     port = _get_openwebui_port(has_gpu)
@@ -382,8 +382,8 @@ Generado por [DevMind](https://github.com/eminem5410/devmind-platform) v0.4.0
 
 
 def generate_rag_lab_profile(ram_gb: float, has_gpu: bool,
-                               ollama_version: Optional[str] = None,
-                               python_version: str = "3.12") -> SetupProfile:
+                               python_version: str = "3.12",
+                               ollama_version: Optional[str] = None) -> SetupProfile:
     """Genera el perfil rag-lab: stack RAG con Ollama + ChromaDB + FastAPI."""
     model = _recommended_model(ram_gb, has_gpu)
 
@@ -546,7 +546,7 @@ if __name__ == "__main__":
         filepath = sys.argv[2]
         text = Path(filepath).read_text()
         n = ingest_text(text)
-        print(f"Ingestadas {n} chunks de {{filepath}}")
+        print(f"Ingestadas {{n}} chunks de {{filepath}}")
     else:
         question = " ".join(sys.argv[1:])
         answer = query(question)

@@ -5,12 +5,14 @@ Comandos:
   devmind doctor              Diagnostica el sistema con severidad y recomendaciones
   devmind doctor --json       Output estructurado para APIs/GUIs/telemetry
   devmind doctor -c           Output compacto de una pantalla (CI)
+  devmind snapshot            Exporta el estado completo del sistema a JSON/YAML
+  devmind benchmark           Mide rendimiento de modelos Ollama (tokens/s, RAM, latencia)
+  devmind explain             Explica warnings y topics en profundidad
+  devmind history             Muestra historial de diagnosticos y benchmarks
+  devmind setup               Configura ambientes AI con perfiles predefinidos
   devmind gpu                 Verifica GPUs, drivers CUDA y Vulkan
   devmind init                Inicializa un proyecto de IA con estructura estandar
   devmind repair              Repara problemas detectados automaticamente
-  devmind snapshot            Exporta el estado completo del sistema a JSON/YAML
-  devmind benchmark           Mide rendimiento de modelos Ollama (tokens/s, RAM, latencia)
-  devmind setup               Configura un ambiente completo de desarrollo AI
 """
 
 import typer
@@ -76,11 +78,73 @@ def snapshot(
     run_snapshot(json_output=json_output, compact=compact, output=output)
 
 
+@app.command()
+def explain(
+    topic: str = typer.Argument(
+        None,
+        help="Topic a explicar: ram, gpu, python, ollama, docker. Sin argumento muestra warnings del ultimo doctor.",
+    ),
+):
+    """Explica warnings y topics de IA en profundidad."""
+    from devmind.commands.explain import run_explain
+    run_explain(topic=topic)
+
+
+@app.command()
+def history(
+    last: int = typer.Option(
+        20, "--last", "-n",
+        help="Numero de eventos a mostrar (default: 20)",
+    ),
+    doctor: bool = typer.Option(
+        False, "--doctor", "-d",
+        help="Mostrar solo historial de diagnosticos",
+    ),
+    bench: bool = typer.Option(
+        False, "--bench", "-b",
+        help="Mostrar solo historial de benchmarks",
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", "-j",
+        help="Output como JSON estructurado",
+    ),
+):
+    """Muestra historial de diagnosticos, benchmarks y snapshots."""
+    from devmind.commands.history import run_history
+    run_history(last=last, doctor=doctor, bench=bench, json_output=json_output)
+
+
 @app.command(name="setup")
-def setup():
-    """Configura un ambiente completo de desarrollo AI."""
-    from devmind.commands.setup import run_setup
-    run_setup()
+def setup(
+    profile: str = typer.Argument(
+        None,
+        help="Perfil de setup: local-llm, ai-dev, rag-lab. Sin argumento lista perfiles disponibles.",
+    ),
+    output_dir: str = typer.Option(
+        None, "--dir", "-d",
+        help="Directorio de salida (default: directorio actual)",
+    ),
+    force: bool = typer.Option(
+        False, "--force", "-f",
+        help="Sobreescribir archivos existentes",
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run",
+        help="Mostrar que se crearia sin escribir archivos",
+    ),
+):
+    """Configura ambientes AI completos con perfiles predefinidos."""
+    if profile is None or profile == "list":
+        from devmind.commands.setup import run_setup_list
+        run_setup_list()
+    else:
+        from devmind.commands.setup import run_setup_profile
+        run_setup_profile(
+            profile_name=profile,
+            output_dir=output_dir,
+            force=force,
+            dry_run=dry_run,
+        )
 
 
 # ── Repair: subcommand group ──────────────────────────────────────────────
@@ -99,24 +163,28 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.3.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.4.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")
         console.print()
-        console.print("  [bold]devmind doctor[/bold]         Diagnostica el sistema completo")
-        console.print("  [bold]devmind doctor --json[/bold]    Output JSON estructurado")
-        console.print("  [bold]devmind doctor -c[/bold]       Output compacto (CI/scripting)")
-        console.print("  [bold]devmind gpu[/bold]             Verifica GPUs y drivers")
-        console.print("  [bold]devmind init[/bold]            Inicializa un proyecto de IA")
-        console.print("  [bold]devmind snapshot[/bold]        Exporta estado del sistema")
-        console.print("  [bold]devmind snapshot -o f.json[/bold]  Guardar snapshot a archivo")
-        console.print("  [bold]devmind benchmark ollama[/bold]   Benchmark modelos Ollama")
-        console.print("  [bold]devmind repair[/bold]          Repara problemas automaticamente")
-        console.print("  [bold]  repair ollama[/bold]         Instala/inicia Ollama + modelos")
-        console.print("  [bold]  repair docker[/bold]         Verifica/instala Docker + Compose")
-        console.print("  [bold]  repair all[/bold]            Repara todo automaticamente")
-        console.print("  [bold]devmind setup[/bold]           Configura ambiente AI completo")
+        console.print("  [bold]devmind doctor[/bold]           Diagnostica el sistema completo")
+        console.print("  [bold]devmind doctor --json[/bold]      Output JSON estructurado")
+        console.print("  [bold]devmind doctor -c[/bold]         Output compacto (CI/scripting)")
+        console.print("  [bold]devmind snapshot[/bold]          Exporta estado del sistema")
+        console.print("  [bold]devmind benchmark ollama[/bold]    Benchmark modelos Ollama")
+        console.print("  [bold]devmind explain[/bold]           Explica warnings en profundidad")
+        console.print("  [bold]devmind history[/bold]           Historial de diagnosticos/benchmarks")
+        console.print("  [bold]devmind setup[/bold]             Configura ambiente AI (perfiles)")
+        console.print("  [bold]  setup local-llm[/bold]        Chat local: Ollama + OpenWebUI")
+        console.print("  [bold]  setup ai-dev[/bold]           Entorno AI: Docker + Jupyter + deps")
+        console.print("  [bold]  setup rag-lab[/bold]          Stack RAG: Ollama + ChromaDB")
+        console.print("  [bold]devmind gpu[/bold]              Verifica GPUs y drivers")
+        console.print("  [bold]devmind init[/bold]             Inicializa un proyecto de IA")
+        console.print("  [bold]devmind repair[/bold]           Repara problemas automaticamente")
+        console.print("  [bold]  repair ollama[/bold]          Instala/inicia Ollama + modelos")
+        console.print("  [bold]  repair docker[/bold]          Verifica/instala Docker + Compose")
+        console.print("  [bold]  repair all[/bold]             Repara todo automaticamente")
         console.print()
         console.print("[dim]Ejecuta 'devmind <comando> --help' para mas detalles.[/dim]")
         console.print()

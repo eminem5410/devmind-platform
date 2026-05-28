@@ -42,7 +42,7 @@ def test_version(client):
     data = response.json()
     assert "name" in data
     assert "version" in data
-    assert data["version"] == "0.5.0"
+    assert data["version"] == "0.7.0"
     assert "api_version" in data
 
 

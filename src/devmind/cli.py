@@ -176,6 +176,10 @@ app.add_typer(repair_app, name="repair")
 from devmind.commands.benchmark import benchmark_app
 app.add_typer(benchmark_app, name="benchmark")
 
+# ── Compare: subcommand group ─────────────────────────────────────────────
+from devmind.commands.compare import compare_app
+app.add_typer(compare_app, name="compare")
+
 
 # ── Callback principal (sin subcomando) ──────────────────────────────────
 
@@ -184,7 +188,7 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.5.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.7.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")
@@ -194,6 +198,7 @@ def main(ctx: typer.Context):
         console.print("  [bold]devmind doctor -c[/bold]         Output compacto (CI/scripting)")
         console.print("  [bold]devmind snapshot[/bold]          Exporta estado del sistema")
         console.print("  [bold]devmind benchmark ollama[/bold]    Benchmark modelos Ollama")
+        console.print("  [bold]devmind compare[/bold]             Compara costos local vs APIs")
         console.print("  [bold]devmind explain[/bold]           Explica warnings en profundidad")
         console.print("  [bold]devmind history[/bold]           Historial de diagnosticos/benchmarks")
         console.print("  [bold]devmind setup[/bold]             Configura ambiente AI (perfiles)")

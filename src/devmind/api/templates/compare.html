@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Compare — DevMind{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Cost Intelligence</h2>
+  <p>Compara costos de inferencia local vs APIs de LLM.</p>
+
+  <div class="stats-grid" style="margin: 1.5rem 0;">
+    <div class="stat-card">
+      <small>Tokens/dia (input)</small>
+      <input type="number" id="dailyTokens" value="50000" min="1000" step="1000" style="width:100%;margin-top:0.3rem;">
+    </div>
+    <div class="stat-card">
+      <small>Ratio output</small>
+      <input type="range" id="outputRatio" value="0.4" min="0.1" max="0.8" step="0.05" style="width:100%;margin-top:0.5rem;">
+      <small id="ratioLabel">40%</small>
+    </div>
+    <div class="stat-card">
+      <small>Cache hit ratio</small>
+      <input type="range" id="cacheRatio" value="0.5" min="0" max="0.9" step="0.05" style="width:100%;margin-top:0.5rem;">
+      <small id="cacheLabel">50%</small>
+    </div>
+    <div class="stat-card">
+      <small>Tokens/s local (auto-detect si vacio)</small>
+      <input type="number" id="tps" placeholder="auto" min="0" step="0.1" style="width:100%;margin-top:0.3rem;">
+    </div>
+  </div>
+
+  <div class="actions-bar">
+    <select id="providerFilter" style="background:#16213e;color:#e0e0e0;border:1px solid #0f3460;padding:0.4rem;border-radius:6px;">
+      <option value="">Todos los proveedores</option>
+    </select>
+    <input type="text" id="modelFilter" placeholder="Filtrar modelo..." style="background:#16213e;color:#e0e0e0;border:1px solid #0f3460;padding:0.4rem;border-radius:6px;">
+    <label style="color:#e0e0e0;"><input type="checkbox" id="showAll"> Todos</label>
+    <button class="contrast" onclick="runCompare()" style="margin-left:0.5rem;">Comparar</button>
+  </div>
+
+  <div id="roiBanner" style="display:none;margin:1rem 0;padding:1rem;background:#16213e;border-radius:8px;border-left:4px solid #4ecca3;">
+    <strong style="color:#4ecca3;">ROI - Inferencia Local</strong>
+    <div id="roiContent"></div>
+  </div>
+
+  <div id="resultsTable" style="margin-top:1rem;overflow-x:auto;"></div>
+</div>
+
+<script>
+function runCompare() {
+  const params = new URLSearchParams({
+    daily_tokens: document.getElementById("dailyTokens").value,
+    output_ratio: document.getElementById("outputRatio").value,
+    cache_ratio: document.getElementById("cacheRatio").value,
+  });
+  const tps = document.getElementById("tps").value;
+  if (tps) params.set("tps", tps);
+  const prov = document.getElementById("providerFilter").value;
+  if (prov) params.set("provider", prov);
+  const mod = document.getElementById("modelFilter").value;
+  if (mod) params.set("vs", mod);
+  if (document.getElementById("showAll").checked) params.set("show_all", "true");
+
+  fetch("/api/compare?" + params.toString())
+    .then(r => r.json())
+    .then(data => renderResults(data));
+}
+
+function renderResults(data) {
+  let html = "<table><thead><tr><th>Modelo</th><th>Proveedor</th><th>Input/1M</th><th>Output/1M</th><th>Costo Dia</th><th>Costo Mes</th><th>Costo Ano</th></tr></thead><tbody>";
+
+  if (data.local) {
+    html += `<tr style="color:#4ecca3;font-weight:bold;"><td>${escapeHtml(params.model||"local-model")}</td><td>Local</td><td>$0.00</td><td>$0.00</td><td>$${data.local.daily_electricity_cost.toFixed(4)}</td><td>$${data.local.monthly_electricity_cost.toFixed(2)}</td><td>$${data.local.yearly_electricity_cost.toFixed(2)}</td></tr>`;
+  }
+
+  const sorted = [...data.api].sort((a,b) => a.monthly_cost - b.monthly_cost);
+  sorted.forEach(r => {
+    html += `<tr><td>${escapeHtml(r.model)}</td><td>${escapeHtml(r.provider)}</td><td>$${r.cost_per_1k_input.toFixed(4)}</td><td>$${r.cost_per_1k_output.toFixed(4)}</td><td>$${r.daily_cost.toFixed(4)}</td><td>$${r.monthly_cost.toFixed(2)}</td><td>$${r.yearly_cost.toFixed(2)}</td></tr>`;
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("resultsTable").innerHTML = html;
+
+  // ROI
+  const roiBanner = document.getElementById("roiBanner");
+  if (data.roi) {
+    roiBanner.style.display = "block";
+    document.getElementById("roiContent").innerHTML = `
+      API mas barata: <strong>${escapeHtml(data.roi.cheapest_api)}</strong> ($${data.roi.cheapest_api_monthly.toFixed(2)}/mes)<br>
+      Costo local: <strong>${escapeHtml(params.model||"local-model")}</strong> ($${data.roi.local_monthly.toFixed(2)}/mes)<br>
+      Ahorro mensual: <strong style="color:#4ecca3;">$${data.roi.monthly_savings.toFixed(2)}</strong> |
+      Ahorro anual: <strong style="color:#4ecca3;">$${data.roi.yearly_savings.toFixed(2)}</strong>
+    `;
+  } else {
+    roiBanner.style.display = "none";
+  }
+}
+
+function escapeHtml(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+// Range labels
+document.getElementById("outputRatio").addEventListener("input", e => {
+  document.getElementById("ratioLabel").textContent = Math.round(e.target.value * 100) + "%";
+});
+document.getElementById("cacheRatio").addEventListener("input", e => {
+  document.getElementById("cacheLabel").textContent = Math.round(e.target.value * 100) + "%";
+});
+
+// Load providers dropdown
+fetch("/api/compare/providers")
+  .then(r => r.json())
+  .then(data => {
+    const sel = document.getElementById("providerFilter");
+    Object.keys(data.providers).sort().forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p; opt.textContent = p + " (" + data.providers[p].count + ")";
+      sel.appendChild(opt);
+    });
+  });
+
+// Auto-run on load
+runCompare();
+</script>
+{% endblock %}

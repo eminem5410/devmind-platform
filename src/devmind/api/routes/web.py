@@ -42,6 +42,11 @@ async def page_benchmarks(request: Request):
     return render("benchmarks.html", request)
 
 
+@router.get("/compare", response_class=HTMLResponse)
+async def page_compare(request: Request):
+    return render("compare.html", request)
+
+
 @router.get("/setup", response_class=HTMLResponse)
 async def page_setup(request: Request):
     return render("setup.html", request)

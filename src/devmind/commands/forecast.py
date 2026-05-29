@@ -33,7 +33,7 @@ def run(
     export: Path = typer.Option(None, "--export", help="Exportar a CSV"),
 ):
     """Proyecta costos API vs Local a 12 meses."""
-    console.print("\n[bold cyan]DevMind Forecast[/bold cyan]  v0.9.0")
+    console.print("\n[bold cyan]DevMind Forecast[/bold cyan]  v0.10.0")
     console.print(f"  TPS objetivo:    {tps}")
     console.print(f"  Tokens/dia:      {daily_tokens:,}")
     console.print(f"  Crecimiento:     {growth * 100:.0f}% mensual\n")

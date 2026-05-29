@@ -181,7 +181,9 @@ from devmind.commands.compare import compare_app
 app.add_typer(compare_app, name="compare")
 
 from devmind.commands.forecast import forecast_app
+from devmind.commands.llm_benchmark import llm_bench_app
 app.add_typer(forecast_app, name="forecast")
+app.add_typer(llm_bench_app, name="llm-benchmark")
 
 from devmind.commands.optimize import optimize_app
 app.add_typer(optimize_app, name="optimize")
@@ -194,7 +196,7 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.9.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.10.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")

@@ -557,7 +557,7 @@ Todos los datos fluyen a traves de modelos Pydantic, lo que permite:
 - ✅ Classifiers Windows en pyproject.toml (OS Independent, Windows 10/11)
 - ✅ Publicado en [PyPI](https://pypi.org/project/devmind/0.9.0/)
 
-### v0.11.0 — SQLite History + CI/CD
+### v0.10.0 — LLM Benchmark Suite
 - ✅ `devmind llm-benchmark run` — Compara Ollama local vs API providers
 - ✅ `devmind llm-benchmark providers` — Lista proveedores soportados
 - ✅ 4 API providers: Groq, Together AI, OpenRouter, Fireworks

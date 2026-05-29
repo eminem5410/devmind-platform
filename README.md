@@ -118,7 +118,7 @@ devmind serve
 | **Benchmarks** | `/benchmarks` | Ejecuta benchmarks Ollama con graficos de rendimiento (Chart.js) |
 | **Setup** | `/setup` | Explora y genera perfiles de configuracion con preview de archivos |
 | **History** | `/history` | Historial completo con tabs: Doctors, Benchmarks, Snapshots |
-| **Explain** | `/explain` | Conceptos de IA explicados en profundidad (5 topics) |
+| **Explain** | `/explain` | Conceptos de IA explicados en profundidad (6 topics) |
 
 ### Stack del Dashboard
 
@@ -504,10 +504,14 @@ Todos los datos fluyen a traves de modelos Pydantic, lo que permite:
 ✅ Página web /compare con filtros interactivos y sliders
 
 ### v0.8.0 — Forecast + Attention Intelligence
-devmind benchmark attention — Benchmark de ThriftAttention (FP4/FP16 mixed precision)
-devmind forecast — Predicción de costo mensual por volumen
-Detección de hardware FP4 en devmind doctor
-devmind explain attention-precision — Deep dive en precisiones de atención
+- ✅ `devmind forecast` — Proyecta costos API vs Local a 12 meses con break-even
+- ✅ `devmind optimize` — Recomienda modelo y proveedor por hardware/presupuesto
+- ✅ `devmind explain attention-precision` — FP4/FP8/FP16/ThriftAttention
+- ✅ `devmind doctor` — Check de precision FP4/FP8/FP16 en GPU
+- ✅ API endpoints: /api/forecast, /api/optimize
+- ✅ Web pages: /forecast, /optimize con formularios interactivos
+- ✅ Hardware service: 27 GPUs con soporte FP4/FP8/FP16/BF16/FP32
+- ✅ Publicado en [PyPI](https://pypi.org/project/devmind/0.8.0/)
 
 ## Requisitos
 

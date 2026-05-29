@@ -1,9 +1,12 @@
 """
 Utilidades de deteccion y monitoreo de hardware GPU.
+Soporta Linux y Windows.
 """
 
-import subprocess
+import os
+import platform
 import shutil
+import subprocess
 from dataclasses import dataclass
 from typing import Optional
 
@@ -52,12 +55,16 @@ def _run_cmd(cmd: list[str], timeout: int = 10) -> tuple[int, str]:
 
 
 def detect_nvidia_gpu() -> list[GPUInfo]:
-    """Detecta GPUs NVIDIA usando nvidia-smi."""
+    """Detecta GPUs NVIDIA usando nvidia-smi (funciona en Linux y Windows)."""
     gpus = []
     if not shutil.which("nvidia-smi"):
         return gpus
 
-    code, output = _run_cmd(["nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,temperature.gpu,utilization.gpu", "--format=csv,noheader,nounits"])
+    code, output = _run_cmd(
+        ["nvidia-smi",
+         "--query-gpu=name,driver_version,memory.total,memory.used,temperature.gpu,utilization.gpu",
+         "--format=csv,noheader,nounits"]
+    )
     if code != 0:
         return gpus
 
@@ -77,50 +84,90 @@ def detect_nvidia_gpu() -> list[GPUInfo]:
             utilization_pct=int(parts[5]) if parts[5].isdigit() else None,
         ))
 
-    # Obtener version CUDA
-    code, output = _run_cmd(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"])
-    if code == 0 and gpus:
-        code2, cuda_out = _run_cmd(["nvidia-smi", "|", "grep", "CUDA Version"])
-        if code2 != 0:
-            code2, cuda_out = _run_cmd(["nvidia-smi", "-L"])
-            for gpu in gpus:
-                gpu.cuda_version = "detectada (nvidia-smi OK)"
+    if gpus:
+        for gpu in gpus:
+            gpu.cuda_version = "detectada (nvidia-smi OK)"
 
     return gpus
 
 
 def detect_cuda_toolkit() -> Optional[str]:
-    """Detecta si el CUDA Toolkit esta instalado y su version."""
-    # nvcc
+    """Detecta CUDA Toolkit version (Linux + Windows)."""
+    # nvcc funciona en ambas plataformas
     code, output = _run_cmd(["nvcc", "--version"])
     if code == 0 and "release" in output.lower():
         for part in output.split():
             if part.replace(".", "").isdigit():
                 return part
-    # ldconfig
-    code, output = _run_cmd(["ldconfig", "-p"])
-    if code == 0 and "libcudart" in output.lower():
-        for line in output.splitlines():
-            if "libcudart" in line.lower():
-                for part in line.split():
-                    if part.startswith("libcudart.so."):
-                        ver = part.split("libcudart.so.")[1]
-                        if ver:
-                            return ver
+
+    system = platform.system()
+
+    if system == "Linux":
+        # Linux: ldconfig
+        code, output = _run_cmd(["ldconfig", "-p"])
+        if code == 0 and "libcudart" in output.lower():
+            for line in output.splitlines():
+                if "libcudart" in line.lower():
+                    for part in line.split():
+                        if part.startswith("libcudart.so."):
+                            ver = part.split("libcudart.so.")[1]
+                            if ver:
+                                return ver
+
+    elif system == "Windows":
+        # Windows: CUDA_PATH environment variable
+        cuda_path = os.environ.get("CUDA_PATH", "")
+        if cuda_path:
+            # Extract version from path like "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0"
+            parts = cuda_path.split("\\")
+            for part in reversed(parts):
+                if part.startswith("v"):
+                    ver = part[1:]
+                    if ver.replace(".", "").isdigit():
+                        return ver
+
+        # Fallback: check nvcc in CUDA_PATH\bin
+        if cuda_path:
+            nvcc_path = os.path.join(cuda_path, "bin", "nvcc.exe")
+            if os.path.exists(nvcc_path):
+                code, output = _run_cmd([nvcc_path, "--version"])
+                if code == 0 and "release" in output.lower():
+                    for part in output.split():
+                        if part.replace(".", "").isdigit():
+                            return part
+
     return None
 
 
 def detect_vulkan() -> Optional[str]:
-    """Detecta si Vulkan esta disponible."""
+    """Detecta si Vulkan esta disponible (Linux + Windows)."""
+    # vulkaninfo funciona en ambas plataformas si esta instalado
     code, output = _run_cmd(["vulkaninfo", "--summary"])
     if code == 0:
         for line in output.splitlines():
             if "GPU id" in line or "deviceName" in line:
                 return line.strip()
-    # Fallback: buscar libvulkan
-    code, output = _run_cmd(["ldconfig", "-p"])
-    if code == 0 and "libvulkan" in output.lower():
-        return "libvulkan detectada"
+
+    system = platform.system()
+
+    if system == "Linux":
+        # Linux: ldconfig fallback
+        code, output = _run_cmd(["ldconfig", "-p"])
+        if code == 0 and "libvulkan" in output.lower():
+            return "libvulkan detectada"
+
+    elif system == "Windows":
+        # Windows: Vulkan loader DLL
+        vulkan_paths = [
+            os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "vulkan-1.dll"),
+        ]
+        for vp in vulkan_paths:
+            if os.path.exists(vp):
+                return "vulkan-1.dll detectada"
+        # WSL: usar libvulkan.so
+        if "microsoft" in open("/proc/version", "r").read().lower() if os.path.exists("/proc/version") else "":
+            return "Vulkan via WSL"
+
     return None
 
 
@@ -128,7 +175,7 @@ def detect_all_gpus() -> list[GPUInfo]:
     """Detecta todas las GPUs disponibles en el sistema."""
     gpus = detect_nvidia_gpu()
     if not gpus:
-        # AMD: rocm-smi
+        # AMD: rocm-smi (Linux) o directo
         if shutil.which("rocm-smi"):
             code, output = _run_cmd(["rocm-smi", "--showproductname"])
             if code == 0:

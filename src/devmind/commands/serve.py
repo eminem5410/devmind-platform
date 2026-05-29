@@ -26,7 +26,7 @@ def run_serve(
     import uvicorn
 
     console.print()
-    console.print("[bold cyan]DevMind API[/bold cyan] — Server v0.8.0")
+    console.print("[bold cyan]DevMind API[/bold cyan] — Server v0.9.0")
     console.print()
     console.print(f"  [bold]Host:[/bold] {host}")
     console.print(f"  [bold]Port:[/bold] {port}")

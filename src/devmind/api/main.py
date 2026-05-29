@@ -72,7 +72,7 @@ async def health():
     return {
         "status": "ok",
         "service": "devmind-api",
-        "version": "0.8.0",
+        "version": "0.9.0",
     }
 
 
@@ -81,7 +81,7 @@ async def version():
     """Version info."""
     return {
         "name": "DevMind Platform",
-        "version": "0.8.0",
+        "version": "0.9.0",
         "api_version": "v1",
     }
 

@@ -194,7 +194,7 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.8.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.9.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")

@@ -24,6 +24,7 @@ from devmind.models.diagnostic import (
     Severity,
     SystemData,
 )
+from devmind.utils.platform import detect_platform
 from devmind.utils.gpu import detect_all_gpus, detect_cuda_toolkit, detect_vulkan
 from devmind.utils.docker import check_docker
 from devmind.utils.ollama import check_ollama
@@ -59,6 +60,17 @@ def _collect_checks(system: SystemData) -> list[DiagnosticCheck]:
     sys_info = get_system_info()
 
     # ── Sistema ────────────────────────────────────────────────────────
+    # -- Plataforma --
+    plat = detect_platform()
+    checks.append(DiagnosticCheck(
+        name="Plataforma",
+        category="system",
+        severity=Severity.INFO,
+        status="ok",
+        value=plat.display,
+        message=f"Shell: {plat.shell} | Pkg: {plat.package_manager or 'N/A'}" if plat.is_linux else f"Shell: {plat.shell}",
+    ))
+
     checks.append(DiagnosticCheck(
         name="OS",
         category="system",

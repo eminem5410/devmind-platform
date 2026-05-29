@@ -9,6 +9,7 @@
   <a href="https://github.com/eminem5410/devmind-platform/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square" alt="License"></a>
   <a href="https://github.com/eminem5410/devmind-platform/releases"><img src="https://img.shields.io/badge/Version-0.10.0-00d4ff?style=flat-square" alt="Version"></a>
   <img src="https://img.shields.io/badge/Linux-Ready-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
+  <a href="https://github.com/eminem5410/devmind-platform#requisitos"><img src="https://img.shields.io/badge/Windows-Experimental-0078D6?style=flat-square&logo=windows&logoColor=white" alt="Windows"></a>
   <img src="https://img.shields.io/badge/API-FastAPI-009688?style=flat-square" alt="FastAPI">
   <img src="https://img.shields.io/badge/GUI-Pico_CSS-9CF">
 </p>

@@ -277,6 +277,15 @@ def search(
     )
 
 
+@app.command("monitor")
+def monitor_cmd(
+    once: bool = typer.Option(False, "--once", help="Single snapshot"),
+    json_output: bool = typer.Option(False, "--json", help="JSON output"),
+    ai: bool = typer.Option(False, "--ai", help="AI-specific metrics"),
+    interval: float = typer.Option(2.0, "--interval", "-i", help="Refresh interval"),
+):
+    run_monitor(once=once, json_output=json_output, ai_mode=ai, interval=interval)
+
 from devmind.commands.repair import repair_app
 app.add_typer(repair_app, name="repair")
 
@@ -302,6 +311,8 @@ app.add_typer(config_app, name="config")
 from devmind.commands.export import export_app
 app.add_typer(export_app, name="export")
 
+from devmind.commands.monitor import run_monitor
+
 
 # ── Callback principal (sin subcomando) ──────────────────────────────────
 
@@ -310,7 +321,7 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.14.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.15.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")

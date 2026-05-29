@@ -7,7 +7,7 @@
   <a href="https://pypi.org/project/devmind/"><img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
   <a href="https://pypi.org/project/devmind/"><img src="https://img.shields.io/badge/pip_install-devmind-00d4ff?style=flat-square" alt="PyPI"></a>
   <a href="https://github.com/eminem5410/devmind-platform/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square" alt="License"></a>
-  <a href="https://github.com/eminem5410/devmind-platform/releases"><img src="https://img.shields.io/badge/Version-0.14.0-00d4ff?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/eminem5410/devmind-platform/releases"><img src="https://img.shields.io/badge/Version-0.15.0-00d4ff?style=flat-square" alt="Version"></a>
   <img src="https://img.shields.io/badge/Linux-Ready-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
   <a href="https://github.com/eminem5410/devmind-platform#requisitos"><img src="https://img.shields.io/badge/Windows-Experimental-0078D6?style=flat-square&logo=windows&logoColor=white" alt="Windows"></a>
   <img src="https://img.shields.io/badge/API-FastAPI-009688?style=flat-square" alt="FastAPI">
@@ -20,7 +20,7 @@
 
 DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, explica y expone** tu entorno de desarrollo AI en Linux. Detecta tu hardware, verifica herramientas, calcula un health score, repara problemas automaticamente, exporta snapshots, benchmarkea modelos locales, genera ambientes completos con perfiles predefinidos, explica warnings en profundidad, hace seguimiento de todo tu historial de actividad, expone todo via API REST con 17 endpoints con persistencia en SQLite, y ahora incluye un **Dashboard Web GUI** con 9 paginas interactivas.
 
-## Demo (v0.14.0 — Configuration Management + Session Export)
+## Demo (v0.15.0 — Real-time AI Monitor)
 
 <a href="https://asciinema.org/a/hAxWIC5ohtFpFXZm" target="_blank"><img src="https://asciinema.org/a/hAxWIC5ohtFpFXZm.svg" width="720" alt="DevMind v0.8.0 Demo"/></a>
 
@@ -601,6 +601,18 @@ Todos los datos fluyen a traves de modelos Pydantic, lo que permite:
 - ✅ `devmind export --provider` / `--model` — Filtrar por provider o modelo
 - ✅ `devmind export -f md` / `-f json` — Formato de salida
 - ✅ Publicado en [PyPI](https://pypi.org/project/devmind/0.14.0/)
+
+### v0.15.0 — Real-time AI Monitor
+- ✅ `devmind monitor` — Dashboard en tiempo real del entorno de IA
+- ✅ `devmind monitor --once` — Snapshot unico (para scripts)
+- ✅ `devmind monitor --json` — Output JSON estructurado
+- ✅ `devmind monitor --ai` — Metricas especificas de IA (Ollama RAM, active model, tokens hoy, pressure)
+- ✅ `devmind monitor -i N` — Intervalo de refresh configurable
+- ✅ CPU, RAM, Disk con colores por nivel de presion
+- ✅ Ollama status + version + modelos detectados
+- ✅ GPU info + VRAM, Docker status + containers
+- ✅ Health score 0-100 con barra visual
+- ✅ Publicado en [PyPI](https://pypi.org/project/devmind/0.15.0/)
 
 ### v0.11.0 — SQLite Benchmark History + CI/CD
 - ✅ `devmind/db/manager.py` — SQLite storage para benchmarks LLM

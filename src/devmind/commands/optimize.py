@@ -24,7 +24,7 @@ def run(
     use_case: str = typer.Option("general", "--use-case", help="Uso: general, code, creative, reasoning"),
 ):
     """Recomienda el mejor modelo y proveedor."""
-    console.print("\n[bold cyan]DevMind Optimize[/bold cyan]  v0.13.0")
+    console.print("\n[bold cyan]DevMind Optimize[/bold cyan]  v0.14.0")
     console.print(f"  TPS:         {tps}")
     console.print(f"  RAM:         {ram} GB")
     gpu_label = gpu if gpu else "auto-detect"

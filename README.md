@@ -17,7 +17,7 @@
 
 > *"Diagnosticar impresiona. Reparar automaticamente enamora. Observar es comprender. Servir es integrar. Visualizar es comprender."*
 
-DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, explica y expone** tu entorno de desarrollo AI en Linux. Detecta tu hardware, verifica herramientas, calcula un health score, repara problemas automaticamente, exporta snapshots, benchmarkea modelos locales, genera ambientes completos con perfiles predefinidos, explica warnings en profundidad, hace seguimiento de todo tu historial de actividad, expone todo via API REST con persistencia en SQLite, y ahora incluye un **Dashboard Web GUI** con 7 paginas interactivas.
+DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, explica y expone** tu entorno de desarrollo AI en Linux. Detecta tu hardware, verifica herramientas, calcula un health score, repara problemas automaticamente, exporta snapshots, benchmarkea modelos locales, genera ambientes completos con perfiles predefinidos, explica warnings en profundidad, hace seguimiento de todo tu historial de actividad, expone todo via API REST con 17 endpoints con persistencia en SQLite, y ahora incluye un **Dashboard Web GUI** con 7 paginas interactivas.
 
 ## Demo (v0.7.0 — Diagnostics + Benchmarks + Cost Intelligence)
 
@@ -87,7 +87,10 @@ devmind snapshot -o state.json
 devmind repair all
 ```
 
-## Dashboard Web (v0.6.0)
+## Forecast + Optimize (v0.8.0)
+Proyecta costos de API vs inferencia local a 12 meses con crecimiento compuesto. Calcula el punto de break-even donde invertir en hardware se amortiza. Recomienda los 3 mejores proveedores API dentro del presupuesto y la mejor opcion de modelo local segun RAM disponible, GPU detectada y caso de uso. Incluye deteccion de precision FP4/FP8/FP16 en GPU para optimizar la seleccion.
+
+Dashboard Web (v0.6.0)
 
 DevMind ahora incluye un dashboard web interactivo accesible desde el navegador. Se levanta automaticamente con `devmind serve` y consume los mismos endpoints REST.
 
@@ -315,7 +318,10 @@ Resumen
 Compara el costo de inferencia local contra 32 modelos de API en 11 providers. Calcula ROI mensual considerando throughput real (auto-detectado del último benchmark), ratio de output/cache, tokens diarios y costo eléctrico estimado. Soporta exportación a 5 formatos: JSON, CSV, HTML (auto-contenido con tema oscuro), Markdown y YAML.
 
 
-### Dashboard Web (v0.6.0)
+### Forecast + Optimize (v0.8.0)
+Proyecta costos de API vs inferencia local a 12 meses con crecimiento compuesto. Calcula el punto de break-even donde invertir en hardware se amortiza. Recomienda los 3 mejores proveedores API dentro del presupuesto y la mejor opcion de modelo local segun RAM disponible, GPU detectada y caso de uso. Incluye deteccion de precision FP4/FP8/FP16 en GPU para optimizar la seleccion.
+
+Dashboard Web (v0.6.0)
 Interfaz grafica accesible desde el navegador con 7 paginas: Dashboard con health score y stats, Doctor con checks detallados y recomendaciones, Snapshots con hardware/software/red, Benchmarks con graficos Chart.js e historial, Setup con preview de perfiles, History con tabs filtrables, y Explain con contenido educativo. Todo server-side con Jinja2 + Pico CSS, sin necesidad de Node.js ni build tools.
 
 ### Health Score
@@ -358,7 +364,7 @@ Un solo modelo de datos (Pydantic), tres renderizadores:
 
 ```
 src/devmind/
-├── cli.py                  # Typer entry point (10 comandos)
+├── cli.py                  # Typer entry point (12 comandos)
 ├── api/                    # FastAPI REST server + Web GUI
 │   ├── main.py             # App con CORS + lifespan + static files
 │   ├── routes/

@@ -23,6 +23,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from devmind.db.manager import get_llm_benchmarks, get_llm_benchmark_stats
 from devmind.utils.logging import logger
 
 console = Console()
@@ -293,6 +294,71 @@ def _render_benchmark_history(entries: list[dict]) -> None:
         console.print()
 
 
+def _render_llm_history(entries: list[dict], limit: int = 50) -> None:
+    """Muestra historial de LLM benchmarks desde SQLite."""
+    rows = get_llm_benchmarks(limit=limit)
+    if not rows:
+        console.print("  [yellow]No hay benchmarks LLM en la base de datos.[/yellow]")
+        console.print("  [dim]Ejecuta [bold]devmind llm-benchmark run[/bold] para generar datos.[/dim]")
+        console.print()
+        return
+    console.print("[bold]Historial de LLM Benchmarks (SQLite)[/bold]")
+    console.print()
+    table = Table(show_header=True, header_style="bold cyan", show_lines=True)
+    table.add_column("#", width=3, justify="right")
+    table.add_column("Fecha", width=16)
+    table.add_column("Proveedor", style="bold", min_width=10)
+    table.add_column("Modelo", min_width=16)
+    table.add_column("tok/s", justify="right", width=7)
+    table.add_column("TTFT", justify="right", width=7)
+    table.add_column("Calidad", justify="right", width=7)
+    table.add_column("Costo", justify="right", width=8)
+    for i, r in enumerate(rows, 1):
+        tps = r.get("tokens_per_sec", 0)
+        if tps >= 15:
+            tps_str = "[green]%.1f[/green]" % tps
+        elif tps >= 5:
+            tps_str = "[yellow]%.1f[/yellow]" % tps
+        else:
+            tps_str = "[red]%.1f[/red]" % tps
+        qs = r.get("quality_score", 0)
+        if qs >= 7:
+            q_str = "[green]%.1f[/green]" % qs
+        elif qs >= 4:
+            q_str = "[yellow]%.1f[/yellow]" % qs
+        else:
+            q_str = "[red]%.1f[/red]" % qs
+        cost = r.get("cost_usd", 0)
+        cost_str = "$%.4f" % cost if cost > 0 else "Free"
+        model = r.get("model", "?")
+        if "/" in model:
+            model = model.split("/")[-1]
+        if len(model) > 20:
+            model = model[:17] + "..."
+        ts = r.get("timestamp", "")[:16].replace("T", " ")
+        table.add_row(
+            str(i), ts, r.get("provider", "?"), model,
+            tps_str, "%dms" % r.get("ttft_ms", 0),
+            q_str, cost_str,
+        )
+    console.print(table)
+    stats = get_llm_benchmark_stats()
+    if stats:
+        console.print()
+        st = stats
+        summary_lines = [
+            "Total runs: %d" % st.get("total_runs", 0),
+            "Avg throughput: %.2f tok/s" % (st.get("avg_tps", 0) or 0),
+            "Best throughput: %.2f tok/s" % (st.get("max_tps", 0) or 0),
+            "Avg calidad: %.1f/10" % (st.get("avg_quality", 0) or 0),
+            "Proveedores: %d | Modelos: %d" % (st.get("providers", 0), st.get("models", 0)),
+        ]
+        sep = chr(10)
+        console.print(Panel(sep.join(summary_lines), title="Estadisticas", border_style="green"))
+    console.print()
+    console.print("[dim]DB: ~/.devmind/devmind.db[/dim]")
+    console.print()
+
 def run_history(
     last: int = typer.Option(
         20, "--last", "-n",
@@ -305,6 +371,10 @@ def run_history(
     bench: bool = typer.Option(
         False, "--bench", "-b",
         help="Mostrar solo historial de benchmarks",
+    ),
+    llm: bool = typer.Option(
+        False, "--llm",
+        help="Mostrar historial de LLM benchmarks (SQLite)",
     ),
     json_output: bool = typer.Option(
         False, "--json", "-j",
@@ -344,6 +414,8 @@ def run_history(
         _render_doctor_history(entries)
     elif bench:
         _render_benchmark_history(entries)
+    elif llm:
+        _render_llm_history(entries, last)
     else:
         _render_events(entries)
 

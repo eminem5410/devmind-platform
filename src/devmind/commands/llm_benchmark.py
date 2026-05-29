@@ -21,6 +21,7 @@ from devmind.services.llm_benchmark import (
     API_PROVIDERS,
     BENCHMARK_PROMPTS,
 )
+from devmind.db.manager import save_llm_benchmark
 from devmind.utils.logging import logger
 
 console = Console()
@@ -72,7 +73,7 @@ def llm_benchmark_run(
         border_style="cyan",
     ))
     console.print()
-    console.print("[bold cyan]v0.10.0[/bold cyan]")
+    console.print("[bold cyan]v0.11.0[/bold cyan]")
     console.print()
 
     # Parse providers
@@ -131,6 +132,33 @@ def llm_benchmark_run(
         include_local=not no_local,
         ollama_model=ollama_model,
     )
+
+
+    # ── Save to SQLite ──────────────────────────────────────────────
+    saved_count = 0
+    for r in results:
+        save_llm_benchmark(
+            provider=r.provider,
+            model=r.model,
+            prompt=r.prompt,
+            prompt_tokens=r.prompt_tokens,
+            response_tokens=r.response_tokens,
+            tokens_per_sec=r.tokens_per_sec,
+            ttft_ms=r.ttft_ms,
+            total_time_ms=r.total_time_ms,
+            quality_score=r.quality.score,
+            quality_completeness=r.quality.completeness,
+            quality_clarity=r.quality.clarity,
+            quality_structure=r.quality.structure,
+            quality_vocabulary=r.quality.vocabulary,
+            cost_usd=r.cost_usd,
+            success=r.success,
+            error=r.error,
+        )
+        saved_count += 1
+
+    console.print(f"  [dim]Guardados {saved_count} resultados en ~/.devmind/devmind.db[/dim]")
+    console.print()
 
     # Render results
     if json_output:

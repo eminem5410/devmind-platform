@@ -105,6 +105,10 @@ def history(
         False, "--bench", "-b",
         help="Mostrar solo historial de benchmarks",
     ),
+    llm: bool = typer.Option(
+        False, "--llm",
+        help="Mostrar historial de LLM benchmarks (SQLite)",
+    ),
     json_output: bool = typer.Option(
         False, "--json", "-j",
         help="Output como JSON estructurado",
@@ -112,7 +116,7 @@ def history(
 ):
     """Muestra historial de diagnosticos, benchmarks y snapshots."""
     from devmind.commands.history import run_history
-    run_history(last=last, doctor=doctor, bench=bench, json_output=json_output)
+    run_history(last=last, doctor=doctor, bench=bench, llm=llm, json_output=json_output)
 
 
 @app.command()
@@ -196,7 +200,7 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.10.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.11.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")

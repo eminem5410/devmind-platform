@@ -17,9 +17,9 @@
 
 > *"Diagnosticar impresiona. Reparar automaticamente enamora. Observar es comprender. Servir es integrar. Visualizar es comprender."*
 
-DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, explica y expone** tu entorno de desarrollo AI en Linux. Detecta tu hardware, verifica herramientas, calcula un health score, repara problemas automaticamente, exporta snapshots, benchmarkea modelos locales, genera ambientes completos con perfiles predefinidos, explica warnings en profundidad, hace seguimiento de todo tu historial de actividad, expone todo via API REST con 17 endpoints con persistencia en SQLite, y ahora incluye un **Dashboard Web GUI** con 7 paginas interactivas.
+DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, explica y expone** tu entorno de desarrollo AI en Linux. Detecta tu hardware, verifica herramientas, calcula un health score, repara problemas automaticamente, exporta snapshots, benchmarkea modelos locales, genera ambientes completos con perfiles predefinidos, explica warnings en profundidad, hace seguimiento de todo tu historial de actividad, expone todo via API REST con 17 endpoints con persistencia en SQLite, y ahora incluye un **Dashboard Web GUI** con 9 paginas interactivas.
 
-## Demo (v0.7.0 — Diagnostics + Benchmarks + Cost Intelligence)
+## Demo (v0.8.0 — Diagnostics + Benchmarks + Cost Intelligence + Forecast)
 
 <a href="https://asciinema.org/a/hAxWIC5ohtFpFXZm" target="_blank"><img src="https://asciinema.org/a/hAxWIC5ohtFpFXZm.svg" width="720" alt="DevMind v0.7.0 Demo"/></a>
 
@@ -27,7 +27,7 @@ DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, ex
 
 ![DevMind Dashboard](devmind-preview.gif)
 
-> Dashboard interactivo con 7 paginas: Home, Diagnosis, Benchmarks, Setup, History, Explain y Compare.
+> Dashboard interactivo con 9 paginas: Home, Diagnosis, Benchmarks, Setup, History, Explain, Compare, Forecast y Optimize.
 > Ejecuta `devmind serve` y abre `http://localhost:8080` en tu navegador.
 
 ## Por que DevMind
@@ -82,6 +82,15 @@ devmind history -d               # Evolucion del health score
 
 # Exportar estado del sistema a JSON
 devmind snapshot -o state.json
+
+# Proyectar costos API vs Local a 12 meses
+devmind forecast run --tps 10 --daily-tokens 100000
+
+# Recomendar modelo y proveedor optimo
+devmind optimize run --ram 8 --budget 50
+
+# Explicar precision de cuantizacion
+devmind explain attention-precision
 
 # Reparar todo automaticamente
 devmind repair all
@@ -322,7 +331,7 @@ Compara el costo de inferencia local contra 32 modelos de API en 11 providers. C
 Proyecta costos de API vs inferencia local a 12 meses con crecimiento compuesto. Calcula el punto de break-even donde invertir en hardware se amortiza. Recomienda los 3 mejores proveedores API dentro del presupuesto y la mejor opcion de modelo local segun RAM disponible, GPU detectada y caso de uso. Incluye deteccion de precision FP4/FP8/FP16 en GPU para optimizar la seleccion.
 
 Dashboard Web (v0.6.0)
-Interfaz grafica accesible desde el navegador con 7 paginas: Dashboard con health score y stats, Doctor con checks detallados y recomendaciones, Snapshots con hardware/software/red, Benchmarks con graficos Chart.js e historial, Setup con preview de perfiles, History con tabs filtrables, y Explain con contenido educativo. Todo server-side con Jinja2 + Pico CSS, sin necesidad de Node.js ni build tools.
+Interfaz grafica accesible desde el navegador con 9 paginas: Dashboard con health score y stats, Doctor con checks detallados y recomendaciones, Snapshots con hardware/software/red, Benchmarks con graficos Chart.js e historial, Setup con preview de perfiles, History con tabs filtrables, Explain con contenido educativo, Forecast con proyeccion de costos, y Optimize con recomendaciones de modelos. Todo server-side con Jinja2 + Pico CSS, sin necesidad de Node.js ni build tools.
 
 ### Health Score
 Puntuacion 0-100 que evalua la preparacion de tu sistema para IA, basada en todos los checks realizados. Se visualiza con barra de progreso y etiqueta (Excelente/Bueno/Aceptable/Necesita atencion/Critico).
@@ -374,6 +383,7 @@ src/devmind/
 │   │   ├── setup.py        # GET /api/setup/profiles, POST /api/setup/{profile}
 │   │   ├── history.py      # GET /api/history/*
 │   │   ├── explain.py      # GET /api/explain/*
+│   │   ├── forecast.py     # GET /api/forecast, /api/optimize
 │   │   └── web.py          # HTML pages (Dashboard, Doctor, Snapshots, ...)
 │   ├── templates/          # Jinja2 HTML templates (v0.6.0)
 │   │   ├── base.html       # Layout base con nav + footer + Pico CSS
@@ -383,12 +393,21 @@ src/devmind/
 │   │   ├── benchmarks.html # Charts Chart.js + historial
 │   │   ├── setup.html      # Perfiles con preview de archivos
 │   │   ├── history.html    # Tabs filtrables
+│   │   ├── forecast.html   # Cost forecast form + results
+│   │   ├── optimize.html   # Model optimizer form + results
 │   │   └── explain.html    # Topics educativos
 │   └── static/             # Archivos estaticos
 ├── db/                     # SQLAlchemy ORM + SQLite
 │   ├── models.py           # DoctorRunRecord, BenchmarkRunRecord, SnapshotRecord
 │   └── database.py         # Engine, session factory, init_db
+├── services/
+│   ├── __init__.py
+│   ├── forecast.py      # Cost projection service
+│   ├── optimize.py      # Model/provider recommendation
+│   └── hardware.py      # GPU specs + precision support (27 GPUs)
 ├── commands/
+│   ├── forecast.py      # Cost projection CLI command
+│   ├── optimize.py      # Model/provider recommendation CLI
 │   ├── benchmark.py        # Ollama performance benchmark
 │   ├── doctor.py           # Diagnostico con severity + health score
 │   ├── explain.py          # Deep dive explanations
@@ -468,7 +487,7 @@ Todos los datos fluyen a traves de modelos Pydantic, lo que permite:
 - ✅ Publicado en [PyPI](https://pypi.org/project/devmind/)
 
 ### v0.6.0 — GUI Dashboard ✅
-- ✅ Dashboard Web con 7 paginas interactivas
+- ✅ Dashboard Web con 9 paginas interactivas
 - ✅ Jinja2 templates + Pico CSS (dark theme)
 - ✅ Chart.js para graficos de benchmarks
 - ✅ HTMX para interactividad sin recarga

@@ -94,6 +94,45 @@ def init_db() -> None:
             FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
         )
     """)
+
+    # ── FTS5 Full-Text Search ──
+    try:
+        conn.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS chat_fts USING fts5(
+                session_id, role, content,
+                content=chat_messages, content_rowid=id
+            )
+        """)
+        conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS chat_fts_ai AFTER INSERT ON chat_messages BEGIN
+                INSERT INTO chat_fts(rowid, session_id, role, content)
+                VALUES (new.id, new.session_id, new.role, new.content);
+            END
+        """)
+        conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS chat_fts_ad AFTER DELETE ON chat_messages BEGIN
+                INSERT INTO chat_fts(chat_fts, rowid, session_id, role, content)
+                VALUES('delete', old.id, old.session_id, old.role, old.content);
+            END
+        """)
+        conn.execute("""
+            CREATE TRIGGER IF NOT EXISTS chat_fts_au AFTER UPDATE ON chat_messages BEGIN
+                INSERT INTO chat_fts(chat_fts, rowid, session_id, role, content)
+                VALUES('delete', old.id, old.session_id, old.role, old.content);
+                INSERT INTO chat_fts(rowid, session_id, role, content)
+                VALUES (new.id, new.session_id, new.role, new.content);
+            END
+        """)
+        # Backfill existing messages if FTS is empty
+        fts_count = conn.execute("SELECT COUNT(*) FROM chat_fts").fetchone()[0]
+        msg_count = conn.execute("SELECT COUNT(*) FROM chat_messages").fetchone()[0]
+        if msg_count > 0 and fts_count == 0:
+            conn.execute("""
+                INSERT INTO chat_fts(rowid, session_id, role, content)
+                SELECT id, session_id, role, content FROM chat_messages
+            """)
+    except Exception:
+        pass  # FTS5 not available (rare)
     conn.commit()
     conn.close()
 
@@ -391,3 +430,159 @@ def get_chat_message_count(session_id: int) -> int:
     ).fetchone()
     conn.close()
     return row["cnt"] if row else 0
+
+# ── Search Functions (FTS5) ──
+
+def search_chat_messages(
+    query: str,
+    limit: int = 20,
+    provider: Optional[str] = None,
+    role: Optional[str] = None,
+) -> list[dict]:
+    """Search chat messages using FTS5 full-text search."""
+    init_db()
+    conn = get_connection()
+    where_clauses = ["chat_fts MATCH ?"]
+    params = [query]
+    if provider:
+        where_clauses.append("s.provider = ?")
+        params.append(provider)
+    if role:
+        where_clauses.append("chat_fts.role = ?")
+        params.append(role)
+    where_sql = " AND ".join(where_clauses)
+    params.append(limit)
+    sql = f"""
+        SELECT chat_fts.*, s.provider, s.model, s.title as session_title
+        FROM chat_fts
+        LEFT JOIN chat_sessions s ON chat_fts.session_id = s.id
+        WHERE {where_sql}
+        ORDER BY rank
+        LIMIT ?
+    """
+    try:
+        rows = conn.execute(sql, params).fetchall()
+    except Exception:
+        rebuild_fts()
+        try:
+            rows = conn.execute(sql, params).fetchall()
+        except Exception:
+            rows = []
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def rebuild_fts() -> None:
+    """Rebuild FTS5 index from existing chat_messages."""
+    init_db()
+    conn = get_connection()
+    try:
+        conn.execute("INSERT INTO chat_fts(chat_fts) VALUES('rebuild')")
+        conn.commit()
+    except Exception:
+        pass
+    conn.close()
+
+
+# ── Stats Functions ──
+
+def get_chat_stats() -> dict:
+    """Get aggregate chat statistics."""
+    init_db()
+    conn = get_connection()
+    stats = {}
+    row = conn.execute("""
+        SELECT
+            COUNT(*) as total_sessions,
+            COUNT(DISTINCT provider) as providers,
+            COUNT(DISTINCT model) as models,
+            SUM(
+                (SELECT COUNT(*) FROM chat_messages WHERE chat_messages.session_id = chat_sessions.id)
+            ) as total_messages
+        FROM chat_sessions
+    """).fetchone()
+    stats["total_sessions"] = row["total_sessions"] or 0
+    stats["providers"] = row["providers"] or 0
+    stats["models"] = row["models"] or 0
+    stats["total_messages"] = row["total_messages"] or 0
+    row = conn.execute("""
+        SELECT
+            COALESCE(SUM(tokens), 0) as total_tokens,
+            COALESCE(SUM(CASE WHEN role = 'assistant' THEN tokens ELSE 0 END), 0) as assistant_tokens,
+            COALESCE(SUM(CASE WHEN role = 'user' THEN tokens ELSE 0 END), 0) as user_tokens,
+            COALESCE(AVG(CASE WHEN role = 'assistant' THEN tokens ELSE 0 END), 0) as avg_response_tokens
+        FROM chat_messages
+    """).fetchone()
+    stats["total_tokens"] = row["total_tokens"] or 0
+    stats["assistant_tokens"] = row["assistant_tokens"] or 0
+    stats["user_tokens"] = row["user_tokens"] or 0
+    stats["avg_response_tokens"] = round(row["avg_response_tokens"], 1) if row["avg_response_tokens"] else 0
+    stats["provider_breakdown"] = {}
+    rows = conn.execute("""
+        SELECT provider, COUNT(*) as sessions
+        FROM chat_sessions GROUP BY provider ORDER BY sessions DESC
+    """).fetchall()
+    for r in rows:
+        stats["provider_breakdown"][r["provider"]] = r["sessions"]
+    stats["top_models"] = []
+    rows = conn.execute("""
+        SELECT model, COUNT(*) as sessions
+        FROM chat_sessions GROUP BY model ORDER BY sessions DESC LIMIT 5
+    """).fetchall()
+    for r in rows:
+        stats["top_models"].append({"model": r["model"], "sessions": r["sessions"]})
+    row = conn.execute("""
+        SELECT COUNT(*) as cnt,
+               COALESCE(SUM((SELECT COUNT(*) FROM chat_messages WHERE chat_messages.session_id = chat_sessions.id)), 0) as msgs,
+               COALESCE(SUM((SELECT SUM(tokens) FROM chat_messages WHERE chat_messages.session_id = chat_sessions.id)), 0) as tokens
+        FROM chat_sessions
+        WHERE created_at >= datetime('now', '-7 days')
+    """).fetchone()
+    stats["sessions_7d"] = row["cnt"] or 0
+    stats["messages_7d"] = row["msgs"] or 0
+    stats["tokens_7d"] = row["tokens"] or 0
+    row = conn.execute("""
+        SELECT session_id, provider, model, title, created_at
+        FROM chat_sessions ORDER BY id DESC LIMIT 1
+    """).fetchone()
+    if row:
+        stats["latest_session"] = dict(row)
+    conn.close()
+    return stats
+
+
+def get_daily_activity(days: int = 7) -> list[dict]:
+    """Get daily message/token counts for the last N days."""
+    init_db()
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT DATE(timestamp) as date, COUNT(*) as messages,
+               SUM(tokens) as tokens, COUNT(DISTINCT session_id) as sessions
+        FROM chat_messages
+        WHERE timestamp >= datetime('now', '-' || ? || ' days')
+        GROUP BY DATE(timestamp) ORDER BY date DESC
+    """, (days,)).fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def get_session_detail(session_id: int) -> Optional[dict]:
+    """Get detailed stats for a single session."""
+    init_db()
+    conn = get_connection()
+    session = conn.execute("SELECT * FROM chat_sessions WHERE id = ?", (session_id,)).fetchone()
+    if not session:
+        conn.close()
+        return None
+    row = conn.execute("""
+        SELECT COUNT(*) as messages,
+               SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as user_messages,
+               SUM(CASE WHEN role = 'assistant' THEN 1 ELSE 0 END) as assistant_messages,
+               COALESCE(SUM(tokens), 0) as total_tokens,
+               MIN(timestamp) as first_message, MAX(timestamp) as last_message
+        FROM chat_messages WHERE session_id = ?
+    """, (session_id,)).fetchone()
+    conn.close()
+    result = dict(session)
+    result.update({k: row[k] for k in row.keys()})
+    return result

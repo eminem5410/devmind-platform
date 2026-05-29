@@ -218,6 +218,65 @@ def chat(
     )
 
 
+# ── Stats: analytics dashboard ────────────────────────────────────────────
+
+@app.command()
+def stats(
+    compact: bool = typer.Option(
+        False, "--compact", "-c",
+        help="Output compacto de una linea (para scripts)",
+    ),
+    days: int = typer.Option(
+        7, "--days", "-d",
+        help="Dias de actividad a mostrar (default: 7)",
+    ),
+):
+    """Dashboard de analytics: tokens, sesiones, providers."""
+    from devmind.commands.stats import run_stats
+    run_stats(compact=compact, days=days)
+
+
+# ── Search: full-text search ──────────────────────────────────────────────
+
+@app.command()
+def search(
+    query: str = typer.Argument(
+        None,
+        help="Texto a buscar en el historial de chats",
+    ),
+    provider: str = typer.Option(
+        None, "--provider", "-p",
+        help="Filtrar por provider (ollama, groq, together, openrouter, fireworks)",
+    ),
+    role: str = typer.Option(
+        None, "--role", "-r",
+        help="Filtrar por rol (user, assistant)",
+    ),
+    limit: int = typer.Option(
+        20, "--limit", "-n",
+        help="Maximo de resultados (default: 20)",
+    ),
+    export_format: str = typer.Option(
+        None, "--export", "-e",
+        help="Exportar resultados (formato: md)",
+    ),
+    output: str = typer.Option(
+        None, "--output", "-o",
+        help="Archivo de salida para exportacion",
+    ),
+):
+    """Busca en el historial de chats usando FTS5 full-text search."""
+    from devmind.commands.search import run_search
+    run_search(
+        query=query or "",
+        provider=provider,
+        role=role,
+        limit=limit,
+        export_format=export_format,
+        output_file=output,
+    )
+
+
 from devmind.commands.repair import repair_app
 app.add_typer(repair_app, name="repair")
 
@@ -245,7 +304,7 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.12.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.13.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")
@@ -265,6 +324,10 @@ def main(ctx: typer.Context):
         console.print("  [bold]  setup ai-dev[/bold]           Entorno AI: Docker + Jupyter + deps")
         console.print("  [bold]  setup rag-lab[/bold]          Stack RAG: Ollama + ChromaDB")
         console.print("  [bold]devmind gpu[/bold]              Verifica GPUs y drivers")
+        console.print("  [bold]devmind stats[/bold]               Dashboard de analytics")
+        console.print("  [bold]  stats --compact[/bold]         Resumen en una linea")
+        console.print("  [bold]devmind search <query>[/bold]     Buscar en historial de chats")
+        console.print("  [bold]  search --export md[/bold]      Exportar resultados")
         console.print("  [bold]devmind chat[/bold]               Chat interactivo con LLMs")
         console.print("  [bold]  chat --provider groq[/bold]     Usar provider especifico")
         console.print("  [bold]  chat --list[/bold]             Listar sesiones")

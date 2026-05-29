@@ -40,6 +40,8 @@ Diagnosticar  →  Recomendar  →  Reparar  →  Observar  →  Configurar  →
 
 ## Instalacion
 
+### Linux / macOS
+
 ```bash
 # Desde PyPI (recomendado)
 pip install devmind
@@ -50,6 +52,39 @@ cd devmind-platform
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
+```
+
+### Windows (PowerShell)
+
+```powershell
+# Desde PyPI (recomendado)
+pip install devmind
+
+# O clonar el repo
+git clone https://github.com/eminem5410/devmind-platform.git
+cd devmind-platform
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e .
+```
+
+### Windows (CMD)
+
+```cmd
+pip install devmind
+
+git clone https://github.com/eminem5410/devmind-platform.git
+cd devmind-platform
+python -m venv .venv
+.venv\Scripts\activate.bat
+pip install -e .
+```
+
+### Windows (WSL)
+
+```bash
+# Dentro de WSL funciona igual que Linux
+pip install devmind
 ```
 
 ## Quick Start

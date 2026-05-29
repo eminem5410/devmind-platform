@@ -147,3 +147,129 @@ def run_init() -> None:
         create_structure(project_name, path)
     else:
         console.print("[dim]Cancelado.[/dim]")
+
+
+# ── Interactive Config Wizard ──────────────────────────────────────────────
+
+def run_init_wizard() -> None:
+    """Interactive wizard: configure API keys, default provider, and model."""
+    from devmind.config.settings import (
+        load_config, save_config, set_default_provider, set_default_model,
+        set_api_key, PROVIDERS, get_api_key, get_base_url,
+    )
+    from rich.table import Table
+
+    config = load_config()
+    console.print()
+    console.print(Panel(
+        "[bold cyan]DevMind Setup Wizard[/bold cyan] " + chr(8212) + " v0.12.0" + NL +
+        "[dim]Configura tu entorno de chat LLM[/dim]",
+        border_style="cyan",
+    ))
+    console.print()
+
+    # Step 1: Provider
+    console.print("[bold]Step 1:[/bold] Elige tu provider default")
+    console.print()
+    for i, p in enumerate(PROVIDERS, 1):
+        current = " [dim](actual)[/dim]" if p == config.get("default_provider", "ollama") else ""
+        has_key = "[green]key set[/green]" if p == "ollama" or get_api_key(p) else "[yellow]no key[/yellow]"
+        console.print(f"  [bold cyan]{i}[/bold cyan]. {p:12s} {has_key}{current}")
+    console.print()
+
+    choice = Prompt.ask(
+        "  Provider [1-5]",
+        choices=[str(i) for i in range(1, 6)],
+        default="1",
+    )
+    selected_provider = PROVIDERS[int(choice) - 1]
+    set_default_provider(selected_provider)
+    console.print(f"  [green]Provider default: {selected_provider}[/green]")
+    console.print()
+
+    # Step 2: Model
+    console.print("[bold]Step 2:[/bold] Modelo default")
+    console.print()
+    if selected_provider == "ollama":
+        console.print("  [dim]Modelos locales detectados por Ollama:[/dim]")
+        try:
+            import httpx
+            with httpx.Client(timeout=5.0) as client:
+                resp = client.get("http://localhost:11434/api/tags")
+                if resp.status_code == 200:
+                    models = resp.json().get("models", [])
+                    if models:
+                        for m in models:
+                            console.print(f"    [green]+[/green] {m.get('name', '?')}")
+                    else:
+                        console.print("    [yellow]No hay modelos instalados[/yellow]")
+                else:
+                    console.print("    [yellow]Ollama no responde[/yellow]")
+        except Exception:
+            console.print("    [yellow]No se pudo conectar a Ollama[/yellow]")
+    else:
+        from devmind.services.llm_benchmark import API_PROVIDERS
+        if selected_provider in API_PROVIDERS:
+            for m in API_PROVIDERS[selected_provider]["models"]:
+                console.print(f"    [green]+[/green] {m}")
+    console.print()
+
+    default_model = config.get("default_model", "phi3:mini")
+    new_model = Prompt.ask(
+        "  Modelo default",
+        default=default_model,
+    )
+    set_default_model(new_model)
+    console.print(f"  [green]Modelo default: {new_model}[/green]")
+    console.print()
+
+    # Step 3: API Keys (skip for ollama)
+    api_providers = [p for p in PROVIDERS if p != "ollama"]
+    if api_providers:
+        console.print("[bold]Step 3:[/bold] API Keys")
+        console.print("[dim]Deja vacio para saltar un provider.[/dim]")
+        console.print()
+
+        for prov in api_providers:
+            current_key = get_api_key(prov)
+            if current_key:
+                console.print(f"  [green]{prov:12s}[/green] [dim]key configurada ({current_key[:8]}...)[/dim]")
+            else:
+                new_key = Prompt.ask(
+                    f"  {prov:12s} API key",
+                    default="",
+                    show_default=False,
+                )
+                if new_key.strip():
+                    set_api_key(prov, new_key.strip())
+                    console.print(f"    [green]Guardada.[/green]")
+                else:
+                    console.print(f"    [dim]Saltado.[/dim]")
+        console.print()
+
+    # Step 4: Summary
+    final_config = load_config()
+    console.print(Panel(
+        "[bold green]Configuracion guardada[/bold green]" + NL + NL +
+        "[bold]Archivo:[/bold] ~/.devmind/config.toml" + NL + NL +
+        "[bold]Provider:[/bold] " + final_config.get("default_provider", "?") + NL +
+        "[bold]Model:[/bold] " + final_config.get("default_model", "?") + NL +
+        NL +
+        "[bold]API Keys:[/bold]",
+        border_style="green",
+    ))
+
+    key_table = Table(show_header=False)
+    key_table.add_column("Provider", width=14)
+    key_table.add_column("Status", width=15)
+    for p in PROVIDERS:
+        if p == "ollama":
+            key_table.add_row(p, "[green]local[/green]")
+        else:
+            k = get_api_key(p)
+            status = "[green]set[/green]" if k else "[yellow]not set[/yellow]"
+            key_table.add_row(p, status)
+    console.print(key_table)
+    console.print()
+    console.print("[dim]Ahora puedes usar: devmind chat[/dim]")
+    console.print()

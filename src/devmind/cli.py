@@ -53,10 +53,19 @@ def gpu():
 
 
 @app.command()
-def init():
-    """Inicializa un proyecto de IA con estructura estandar."""
-    from devmind.commands.init_cmd import run_init
-    run_init()
+def init(
+    interactive: bool = typer.Option(
+        False, "--interactive", "-i",
+        help="Wizard interactivo: configurar API keys, provider y modelo default",
+    ),
+):
+    """Inicializa un proyecto de IA o configura DevMind (--interactive)."""
+    if interactive:
+        from devmind.commands.init_cmd import run_init_wizard
+        run_init_wizard()
+    else:
+        from devmind.commands.init_cmd import run_init
+        run_init()
 
 
 @app.command()
@@ -173,6 +182,42 @@ def setup(
 
 
 # ── Repair: subcommand group ──────────────────────────────────────────────
+# ── Chat: interactive LLM ─────────────────────────────────────────────────
+
+@app.command()
+def chat(
+    model: str = typer.Option(
+        None, "--model", "-m",
+        help="Modelo a usar (default: configurado en init)",
+    ),
+    provider: str = typer.Option(
+        None, "--provider", "-p",
+        help="Provider a usar (ollama, groq, together, openrouter, fireworks)",
+    ),
+    session: int = typer.Option(
+        None, "--session", "-s",
+        help="ID de sesion a resumir",
+    ),
+    list_sessions: bool = typer.Option(
+        False, "--list", "-l",
+        help="Listar sesiones recientes",
+    ),
+    prompt: str = typer.Option(
+        None, "--prompt",
+        help="Enviar un mensaje y salir (modo non-interactive)",
+    ),
+):
+    """Chat interactivo con LLMs (Ollama local + APIs)."""
+    from devmind.commands.chat import run_chat
+    run_chat(
+        model=model,
+        provider=provider,
+        session=session,
+        list_sessions=list_sessions,
+        prompt_text=prompt,
+    )
+
+
 from devmind.commands.repair import repair_app
 app.add_typer(repair_app, name="repair")
 
@@ -200,7 +245,7 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.11.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.12.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")
@@ -220,7 +265,11 @@ def main(ctx: typer.Context):
         console.print("  [bold]  setup ai-dev[/bold]           Entorno AI: Docker + Jupyter + deps")
         console.print("  [bold]  setup rag-lab[/bold]          Stack RAG: Ollama + ChromaDB")
         console.print("  [bold]devmind gpu[/bold]              Verifica GPUs y drivers")
+        console.print("  [bold]devmind chat[/bold]               Chat interactivo con LLMs")
+        console.print("  [bold]  chat --provider groq[/bold]     Usar provider especifico")
+        console.print("  [bold]  chat --list[/bold]             Listar sesiones")
         console.print("  [bold]devmind init[/bold]             Inicializa un proyecto de IA")
+        console.print("  [bold]  init --interactive[/bold]       Configurar API keys y provider")
         console.print("  [bold]devmind repair[/bold]           Repara problemas automaticamente")
         console.print("  [bold]devmind serve[/bold]             Levanta API REST (FastAPI)")
         console.print("  [bold]  serve --port 3000[/bold]       Puerto custom")

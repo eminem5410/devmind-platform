@@ -70,6 +70,30 @@ def init_db() -> None:
         )
     """)
 
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            provider TEXT NOT NULL DEFAULT 'ollama',
+            model TEXT NOT NULL DEFAULT 'phi3:mini',
+            title TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            tokens INTEGER DEFAULT 0,
+            timestamp TEXT NOT NULL,
+            FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -113,6 +137,30 @@ def save_llm_benchmark(
         ),
     )
     row_id = cursor.lastrowid
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            provider TEXT NOT NULL DEFAULT 'ollama',
+            model TEXT NOT NULL DEFAULT 'phi3:mini',
+            title TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            tokens INTEGER DEFAULT 0,
+            timestamp TEXT NOT NULL,
+            FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+        )
+    """)
     conn.commit()
     conn.close()
     return row_id
@@ -197,6 +245,149 @@ def save_command_history(
         ),
     )
     row_id = cursor.lastrowid
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            provider TEXT NOT NULL DEFAULT 'ollama',
+            model TEXT NOT NULL DEFAULT 'phi3:mini',
+            title TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            tokens INTEGER DEFAULT 0,
+            timestamp TEXT NOT NULL,
+            FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+        )
+    """)
     conn.commit()
     conn.close()
     return row_id
+
+# ── Chat Session & Message Functions ──
+
+def create_chat_session(
+    provider: str = "ollama",
+    model: str = "phi3:mini",
+    title: str = "",
+) -> int:
+    """Creates a new chat session. Returns the session ID."""
+    init_db()
+    conn = get_connection()
+    cursor = conn.execute(
+        """INSERT INTO chat_sessions (session_id, provider, model, title, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (
+            __import__("uuid").uuid4().hex[:12],
+            provider, model, title,
+            datetime.now(timezone.utc).isoformat(),
+            datetime.now(timezone.utc).isoformat(),
+        ),
+    )
+    row_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return row_id
+
+
+def get_chat_session(session_id: int) -> Optional[dict]:
+    """Get a chat session by its row ID."""
+    init_db()
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT * FROM chat_sessions WHERE id = ?", (session_id,)
+    ).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def list_chat_sessions(limit: int = 20) -> list[dict]:
+    """List recent chat sessions."""
+    init_db()
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT * FROM chat_sessions ORDER BY id DESC LIMIT ?", (limit,)
+    ).fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def update_chat_session(session_id: int, title: str = "", model: str = "") -> None:
+    """Update a chat session title or model."""
+    init_db()
+    conn = get_connection()
+    if title:
+        conn.execute(
+            "UPDATE chat_sessions SET title = ?, updated_at = ? WHERE id = ?",
+            (title, datetime.now(timezone.utc).isoformat(), session_id),
+        )
+    if model:
+        conn.execute(
+            "UPDATE chat_sessions SET model = ?, updated_at = ? WHERE id = ?",
+            (model, datetime.now(timezone.utc).isoformat(), session_id),
+        )
+    conn.commit()
+    conn.close()
+
+
+def delete_chat_session(session_id: int) -> None:
+    """Delete a chat session and all its messages."""
+    init_db()
+    conn = get_connection()
+    conn.execute("DELETE FROM chat_messages WHERE session_id = ?", (session_id,))
+    conn.execute("DELETE FROM chat_sessions WHERE id = ?", (session_id,))
+    conn.commit()
+    conn.close()
+
+
+def save_chat_message(
+    session_id: int,
+    role: str,
+    content: str,
+    tokens: int = 0,
+) -> int:
+    """Save a chat message. Role: user, assistant, or system."""
+    init_db()
+    conn = get_connection()
+    cursor = conn.execute(
+        """INSERT INTO chat_messages (session_id, role, content, tokens, timestamp)
+           VALUES (?, ?, ?, ?, ?)""",
+        (session_id, role, content[:50000], tokens, datetime.now(timezone.utc).isoformat()),
+    )
+    row_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return row_id
+
+
+def get_chat_messages(session_id: int, limit: int = 100) -> list[dict]:
+    """Get all messages for a chat session."""
+    init_db()
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT * FROM chat_messages WHERE session_id = ? ORDER BY id ASC LIMIT ?",
+        (session_id, limit),
+    ).fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def get_chat_message_count(session_id: int) -> int:
+    """Count messages in a session."""
+    init_db()
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT COUNT(*) as cnt FROM chat_messages WHERE session_id = ?",
+        (session_id,),
+    ).fetchone()
+    conn.close()
+    return row["cnt"] if row else 0

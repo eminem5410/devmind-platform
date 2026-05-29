@@ -7,7 +7,7 @@
   <a href="https://pypi.org/project/devmind/"><img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
   <a href="https://pypi.org/project/devmind/"><img src="https://img.shields.io/badge/pip_install-devmind-00d4ff?style=flat-square" alt="PyPI"></a>
   <a href="https://github.com/eminem5410/devmind-platform/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square" alt="License"></a>
-  <a href="https://github.com/eminem5410/devmind-platform/releases"><img src="https://img.shields.io/badge/Version-0.9.0-00d4ff?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/eminem5410/devmind-platform/releases"><img src="https://img.shields.io/badge/Version-0.10.0-00d4ff?style=flat-square" alt="Version"></a>
   <img src="https://img.shields.io/badge/Linux-Ready-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
   <img src="https://img.shields.io/badge/API-FastAPI-009688?style=flat-square" alt="FastAPI">
   <img src="https://img.shields.io/badge/GUI-Pico_CSS-9CF">
@@ -19,7 +19,7 @@
 
 DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, explica y expone** tu entorno de desarrollo AI en Linux. Detecta tu hardware, verifica herramientas, calcula un health score, repara problemas automaticamente, exporta snapshots, benchmarkea modelos locales, genera ambientes completos con perfiles predefinidos, explica warnings en profundidad, hace seguimiento de todo tu historial de actividad, expone todo via API REST con 17 endpoints con persistencia en SQLite, y ahora incluye un **Dashboard Web GUI** con 9 paginas interactivas.
 
-## Demo (v0.9.0 — Platform Abstraction + Windows Support)
+## Demo (v0.10.0 — LLM Benchmark Suite)
 
 <a href="https://asciinema.org/a/hAxWIC5ohtFpFXZm" target="_blank"><img src="https://asciinema.org/a/hAxWIC5ohtFpFXZm.svg" width="720" alt="DevMind v0.8.0 Demo"/></a>
 
@@ -131,7 +131,7 @@ devmind explain attention-precision
 devmind repair all
 ```
 
-## Forecast + Optimize (v0.9.0)
+## Forecast + Optimize (v0.10.0)
 Proyecta costos de API vs inferencia local a 12 meses con crecimiento compuesto. Calcula el punto de break-even donde invertir en hardware se amortiza. Recomienda los 3 mejores proveedores API dentro del presupuesto y la mejor opcion de modelo local segun RAM disponible, GPU detectada y caso de uso. Incluye deteccion de precision FP4/FP8/FP16 en GPU para optimizar la seleccion.
 
 Dashboard Web (v0.6.0)
@@ -362,7 +362,7 @@ Resumen
 Compara el costo de inferencia local contra 32 modelos de API en 11 providers. Calcula ROI mensual considerando throughput real (auto-detectado del último benchmark), ratio de output/cache, tokens diarios y costo eléctrico estimado. Soporta exportación a 5 formatos: JSON, CSV, HTML (auto-contenido con tema oscuro), Markdown y YAML.
 
 
-### Forecast + Optimize (v0.9.0)
+### Forecast + Optimize (v0.10.0)
 Proyecta costos de API vs inferencia local a 12 meses con crecimiento compuesto. Calcula el punto de break-even donde invertir en hardware se amortiza. Recomienda los 3 mejores proveedores API dentro del presupuesto y la mejor opcion de modelo local segun RAM disponible, GPU detectada y caso de uso. Incluye deteccion de precision FP4/FP8/FP16 en GPU para optimizar la seleccion.
 
 Dashboard Web (v0.6.0)
@@ -555,6 +555,15 @@ Todos los datos fluyen a traves de modelos Pydantic, lo que permite:
 - ✅ `devmind doctor` — Nuevo check "Plataforma" con shell y gestor de paquetes
 - ✅ Classifiers Windows en pyproject.toml (OS Independent, Windows 10/11)
 - ✅ Publicado en [PyPI](https://pypi.org/project/devmind/0.9.0/)
+
+### v0.10.0 — LLM Benchmark Suite
+- ✅ `devmind llm-benchmark run` — Compara Ollama local vs API providers
+- ✅ `devmind llm-benchmark providers` — Lista proveedores soportados
+- ✅ 4 API providers: Groq, Together AI, OpenRouter, Fireworks
+- ✅ Quality heuristics: completitud, claridad, estructura, vocabulario (0-10)
+- ✅ Metricas: tokens/s, TTFT, costo estimado, detalle de calidad
+- ✅ Publicado en [PyPI](https://pypi.org/project/devmind/0.10.0/)
+
 
 
 ## Requisitos

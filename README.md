@@ -22,7 +22,16 @@ DevMind es una CLI que **diagnostica, recomienda, repara, observa, configura, ex
 
 ## Demo (v0.16.0 — Quality & Polish)
 
-<a href="https://asciinema.org/a/hAxWIC5ohtFpFXZm" target="_blank"><img src="https://asciinema.org/a/hAxWIC5ohtFpFXZm.svg" width="720" alt="DevMind v0.8.0 Demo"/></a>
+![DevMind Demo GIF](docs/assets/devmind_demo.gif)
+
+### Screenshots
+
+| | | |
+|:---:|:---:|:---:|
+| ![Monitor](docs/assets/screenshots/monitor.png) | ![Doctor](docs/assets/screenshots/doctor.png) | ![Config](docs/assets/screenshots/config.png) |
+| **monitor --ai --once** | **doctor -c** | **config show** |
+| ![Stats](docs/assets/screenshots/stats.png) | ![Search](docs/assets/screenshots/search.png) | ![Help](docs/assets/screenshots/help.png) |
+| **stats -c** | **search 'embedding'** | **--help** |
 
 ### Dashboard Web
 

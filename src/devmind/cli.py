@@ -29,7 +29,7 @@ app = typer.Typer(
 console = Console()
 
 
-@app.command()
+@app.command(rich_help_panel="Diagnostics")
 def doctor(
     json_output: bool = typer.Option(
         False, "--json", "-j",
@@ -45,14 +45,14 @@ def doctor(
     run_doctor(json_output=json_output, compact=compact)
 
 
-@app.command()
+@app.command(rich_help_panel="Diagnostics")
 def gpu():
     """Verifica GPUs, drivers CUDA y Vulkan."""
     from devmind.commands.gpu_check import run_gpu_check
     run_gpu_check()
 
 
-@app.command()
+@app.command(rich_help_panel="Environment")
 def init(
     interactive: bool = typer.Option(
         False, "--interactive", "-i",
@@ -68,7 +68,7 @@ def init(
         run_init()
 
 
-@app.command()
+@app.command(rich_help_panel="Observability")
 def snapshot(
     json_output: bool = typer.Option(
         False, "--json", "-j",
@@ -88,7 +88,7 @@ def snapshot(
     run_snapshot(json_output=json_output, compact=compact, output=output)
 
 
-@app.command()
+@app.command(rich_help_panel="AI Tools")
 def explain(
     topic: str = typer.Argument(
         None,
@@ -100,7 +100,7 @@ def explain(
     run_explain(topic=topic)
 
 
-@app.command()
+@app.command(rich_help_panel="Observability")
 def history(
     last: int = typer.Option(
         20, "--last", "-n",
@@ -128,7 +128,7 @@ def history(
     run_history(last=last, doctor=doctor, bench=bench, llm=llm, json_output=json_output)
 
 
-@app.command()
+@app.command(rich_help_panel="Platform")
 def serve(
     port: int = typer.Option(
         8080, "--port", "-p",
@@ -148,7 +148,7 @@ def serve(
     run_serve(port=port, host=host, reload=reload)
 
 
-@app.command(name="setup")
+@app.command(name="setup", rich_help_panel="Environment")
 def setup(
     profile: str = typer.Argument(
         None,
@@ -184,7 +184,7 @@ def setup(
 # ── Repair: subcommand group ──────────────────────────────────────────────
 # ── Chat: interactive LLM ─────────────────────────────────────────────────
 
-@app.command()
+@app.command(rich_help_panel="AI Tools")
 def chat(
     model: str = typer.Option(
         None, "--model", "-m",
@@ -220,7 +220,7 @@ def chat(
 
 # ── Stats: analytics dashboard ────────────────────────────────────────────
 
-@app.command()
+@app.command(rich_help_panel="Observability")
 def stats(
     compact: bool = typer.Option(
         False, "--compact", "-c",
@@ -238,7 +238,7 @@ def stats(
 
 # ── Search: full-text search ──────────────────────────────────────────────
 
-@app.command()
+@app.command(rich_help_panel="AI Tools")
 def search(
     query: str = typer.Argument(
         None,
@@ -277,39 +277,40 @@ def search(
     )
 
 
-@app.command("monitor")
+@app.command("monitor", rich_help_panel="Diagnostics")
 def monitor_cmd(
     once: bool = typer.Option(False, "--once", help="Single snapshot"),
     json_output: bool = typer.Option(False, "--json", help="JSON output"),
     ai: bool = typer.Option(False, "--ai", help="AI-specific metrics"),
     interval: float = typer.Option(2.0, "--interval", "-i", help="Refresh interval"),
 ):
+    """Monitor AI environment in real-time (CPU, RAM, Ollama, Docker, GPU)."""
     run_monitor(once=once, json_output=json_output, ai_mode=ai, interval=interval)
 
 from devmind.commands.repair import repair_app
-app.add_typer(repair_app, name="repair")
+app.add_typer(repair_app, name="repair", rich_help_panel="Diagnostics")
 
 # ── Benchmark: subcommand group ───────────────────────────────────────────
 from devmind.commands.benchmark import benchmark_app
-app.add_typer(benchmark_app, name="benchmark")
+app.add_typer(benchmark_app, name="benchmark", rich_help_panel="AI Tools")
 
 # ── Compare: subcommand group ─────────────────────────────────────────────
 from devmind.commands.compare import compare_app
-app.add_typer(compare_app, name="compare")
+app.add_typer(compare_app, name="compare", rich_help_panel="Platform")
 
 from devmind.commands.forecast import forecast_app
 from devmind.commands.llm_benchmark import llm_bench_app
-app.add_typer(forecast_app, name="forecast")
-app.add_typer(llm_bench_app, name="llm-benchmark")
+app.add_typer(forecast_app, name="forecast", rich_help_panel="Platform")
+app.add_typer(llm_bench_app, name="llm-benchmark", rich_help_panel="AI Tools")
 
 from devmind.commands.optimize import optimize_app
-app.add_typer(optimize_app, name="optimize")
+app.add_typer(optimize_app, name="optimize", rich_help_panel="Platform")
 
 from devmind.commands.config_cmd import config_app
-app.add_typer(config_app, name="config")
+app.add_typer(config_app, name="config", rich_help_panel="Environment")
 
 from devmind.commands.export import export_app
-app.add_typer(export_app, name="export")
+app.add_typer(export_app, name="export", rich_help_panel="Environment")
 
 from devmind.commands.monitor import run_monitor
 
@@ -321,7 +322,7 @@ def main(ctx: typer.Context):
     """DevMind Platform — Herramientas CLI para desarrollo de IA en Linux."""
     if ctx.invoked_subcommand is None:
         console.print()
-        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.15.0")
+        console.print("[bold cyan]DevMind Platform[/bold cyan] v0.16.0")
         console.print("[dim]Plataforma integral para desarrollo de IA en Linux[/dim]")
         console.print()
         console.print("Comandos disponibles:")
